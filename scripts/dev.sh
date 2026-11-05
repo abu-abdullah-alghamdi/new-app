@@ -13,6 +13,7 @@ cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 APP_NAME="عيادات أريام"
 WATCH_EVERY="${WATCH_EVERY:-30}"   # كل كم ثانية يتحقق من وجود تحديث
+IOS_MIN="${IOS_MIN:-17.0}"         # أقل إصدار iOS (Xcode الجديد ما يدعم 13)
 
 say()  { printf "\n\033[1;32m▶ %s\033[0m\n" "$*"; }
 warn() { printf "\n\033[1;33m! %s\033[0m\n" "$*"; }
@@ -42,12 +43,24 @@ ensure_ios() {
   fi
 }
 
+# يرفع أقل إصدار iOS في المشروع والمكتبات (Xcode الحديث يرفض iOS 13)
+fix_deployment_target() {
+  sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $IOS_MIN;/g" ios/Runner.xcodeproj/project.pbxproj
+  /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $IOS_MIN" ios/Flutter/AppFrameworkInfo.plist 2>/dev/null || true
+  if [[ -f ios/Podfile ]]; then
+    sed -i '' -E "s/^#? *platform :ios.*/platform :ios, '$IOS_MIN'/" ios/Podfile
+    IOS_MIN="$IOS_MIN" perl -0pi -e 's/flutter_additional_ios_build_settings\(target\)\n(?!\s*target\.build_configurations)/flutter_additional_ios_build_settings(target)\n    target.build_configurations.each { |c| c.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = "$ENV{IOS_MIN}" }\n/' ios/Podfile
+  fi
+}
+
 prepare() {
   ensure_ios
+  fix_deployment_target
   say "تحميل الحزم"
   flutter pub get
   say "تجهيز إعدادات Xcode و Pods"
   flutter build ios --config-only --debug --no-codesign
+  fix_deployment_target
   if [[ -f ios/Podfile ]]; then
     (cd ios && pod install)
   fi
