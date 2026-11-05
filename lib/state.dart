@@ -83,6 +83,16 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// حذف الحساب: يمسح بيانات المستخدم ومواعيده من التطبيق
+  void deleteAccount() {
+    name = '';
+    phone = '';
+    loggedIn = false;
+    tab = 0;
+    bookings.clear();
+    notifyListeners();
+  }
+
   void setProfile({required String name, required String phone}) {
     this.name = name;
     this.phone = phone;

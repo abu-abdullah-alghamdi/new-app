@@ -87,7 +87,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
       HapticFeedback.heavyImpact();
       setState(() => _error = true);
       _ctrl.clear();
-      _shake.forward(from: 0);
+      if (!MediaQuery.disableAnimationsOf(context)) _shake.forward(from: 0);
     }
   }
 
@@ -124,7 +124,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                         GestureDetector(
                           onTap: () => Navigator.of(context).maybePop(),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                             child: Text('تعديل', style: ts(15, decoration: TextDecoration.underline)),
                           ),
                         ),
@@ -158,15 +158,15 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                                   child: Padding(
                                     padding: EdgeInsets.only(right: i < 3 ? 12 : 0),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      height: 86,
+                                      duration: motion(context, 200),
+                                      height: 86 * uiScale(context),
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
                                         color: _ok ? AppColors.lime : AppColors.white,
                                         borderRadius: BorderRadius.circular(26),
                                         border: Border.all(color: borderColor, width: 2),
                                       ),
-                                      child: Text(filled ? ar(code[i]) : '', style: ts(34, weight: FontWeight.w500)),
+                                      child: Text(filled ? ar(code[i]) : '', style: ts(34, weight: FontWeight.w500, color: _ok ? AppColors.onAccent : null)),
                                     ),
                                   ),
                                 );
@@ -235,7 +235,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(999)),
-                      child: Text('للتجربة: الرمز ١١١١', style: ts(13, color: AppColors.body)),
+                      child: Text('للتجربة: الرمز ١١١١', style: ts(14, color: AppColors.body)),
                     ),
                   ),
                 ],

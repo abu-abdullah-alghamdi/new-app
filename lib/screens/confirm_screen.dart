@@ -5,6 +5,7 @@ import '../main.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'privacy_screen.dart';
 import 'done_screen.dart';
 
 class ConfirmScreen extends StatefulWidget {
@@ -126,6 +127,16 @@ class _ConfirmScreenState extends State<ConfirmScreen> {
                         const TextSpan(text: ' واستخدام بياناتي لإدارة الموعد وإرسال التذكير.'),
                       ]),
                       style: ts(13, height: 1.7),
+                    ),
+                  ),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).push(iosRoute(const PrivacyScreen())),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(44, 4, 10, 12),
+                        child: Text('قراءة سياسة الخصوصية', style: ts(14, decoration: TextDecoration.underline)),
+                      ),
                     ),
                   ),
                   AppCheck(

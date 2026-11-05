@@ -45,14 +45,14 @@ class _DoneScreenState extends State<DoneScreen> {
                 Center(
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 600),
+                    duration: motion(context, 600),
                     curve: Curves.elasticOut,
                     builder: (context, v, child) => Transform.scale(scale: 0.4 + 0.6 * v, child: child),
                     child: Container(
                       width: 120,
                       height: 120,
                       decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-                      child: const Icon(Icons.check_rounded, size: 60, color: AppColors.ink),
+                      child: const Icon(Icons.check_rounded, size: 60, color: AppColors.onAccent),
                     ),
                   ),
                 ),
@@ -72,7 +72,7 @@ class _DoneScreenState extends State<DoneScreen> {
                     Text(b.day.full, style: ts(22, color: AppColors.blue)),
                     Text(b.range, style: ts(15)),
                     const SizedBox(height: 6),
-                    Text('بيوصلك تذكير على واتساب قبل موعدك بيوم.', style: ts(13, color: AppColors.body)),
+                    Text('بيوصلك تذكير على واتساب قبل موعدك بيوم.', style: ts(14, color: AppColors.body)),
                   ],
                 ),
                 const Spacer(),

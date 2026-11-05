@@ -9,9 +9,9 @@ import '../widgets.dart';
 import 'confirm_screen.dart';
 import 'done_screen.dart';
 
-/// يفتح صفحة الحجز لطبيب، أو لإعادة جدولة موعد موجود
+/// يفتح الحجز كنافذة كاملة من تحت (مهمة مؤقتة تغطي الشريط السفلي، مع زر إغلاق)
 void openBooking(BuildContext context, Doctor doctor, {String? cat, Booking? editing, int? day}) {
-  Navigator.of(context).push(iosRoute(BookingScreen(doctor: doctor, cat: cat, editing: editing, initialDay: day)));
+  Navigator.of(context).push(iosModal(BookingScreen(doctor: doctor, cat: cat, editing: editing, initialDay: day)));
 }
 
 class BookingScreen extends StatefulWidget {
@@ -86,7 +86,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 children: [
                   _px(Row(
                     children: [
-                      const BackCircle(),
+                      const BackCircle(close: true),
                       Expanded(
                         child: Text(
                           editing != null ? 'إعادة جدولة' : 'حجز موعد',
@@ -94,7 +94,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           style: ts(18, weight: FontWeight.w500),
                         ),
                       ),
-                      const CircleButton(icon: CupertinoIcons.share, semanticLabel: 'مشاركة', iconSize: 20),
+                      const SizedBox(width: 58),
                     ],
                   )),
                   if (editing != null) ...[
@@ -138,6 +138,7 @@ class _BookingScreenState extends State<BookingScreen> {
                           child: DayPill(
                             top: DayInfo(i).dayNum,
                             bottom: DayInfo(i).closed ? 'مغلق' : DayInfo(i).short,
+                            semanticLabel: DayInfo(i).full,
                             closed: DayInfo(i).closed,
                             selected: _day == i,
                             onTap: () => setState(() {
@@ -182,7 +183,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         Text('عن الطبيب', style: ts(20, weight: FontWeight.w500)),
                         const SizedBox(height: 6),
                         AnimatedSize(
-                          duration: const Duration(milliseconds: 250),
+                          duration: motion(context, 250),
                           alignment: Alignment.topCenter,
                           child: Text(about, style: ts(14, color: AppColors.body, height: 1.85)),
                         ),
@@ -247,15 +248,16 @@ class _TimePill extends StatelessWidget {
     return Pressable(
       onTap: onTap,
       enabled: !taken,
+      selected: selected,
+      semanticLabel: '$text${taken ? '، محجوز' : ''}',
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        height: 58,
+        duration: motion(context, 250),
         constraints: const BoxConstraints(minWidth: 104),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999), boxShadow: pillShadow),
         child: Text(
           text,
+          textAlign: TextAlign.center,
           style: ts(16, weight: FontWeight.w500, color: fg, decoration: taken ? TextDecoration.lineThrough : null),
         ),
       ),

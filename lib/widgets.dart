@@ -8,27 +8,40 @@ import 'theme.dart';
 TextStyle ts(
   double size, {
   FontWeight weight = FontWeight.w400,
-  Color color = AppColors.ink,
+  Color? color,
   double? height,
   TextDecoration? decoration,
-}) =>
-    GoogleFonts.ibmPlexSansArabic(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-      height: height,
-      decoration: decoration,
-      decorationColor: color,
-    );
+}) {
+  final c = color ?? AppColors.ink;
+  return GoogleFonts.ibmPlexSansArabic(
+    fontSize: size,
+    fontWeight: weight,
+    color: c,
+    height: height,
+    decoration: decoration,
+    decorationColor: c,
+  );
+}
 
-/// يصغّر العنصر شوي عند الضغط مثل أزرار iOS
+/// لون النص المناسب فوق خلفية معيّنة
+Color _fgFor(Color bg) => bg == AppColors.lime ? AppColors.onAccent : AppColors.ink;
+
+/// يصغّر العنصر شوي عند الضغط مثل أزرار iOS (إلا إذا "تقليل الحركة" مفعّل)
 class Pressable extends StatefulWidget {
-  const Pressable({super.key, required this.child, this.onTap, this.enabled = true, this.semanticLabel});
+  const Pressable({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.enabled = true,
+    this.semanticLabel,
+    this.selected,
+  });
 
   final Widget child;
   final VoidCallback? onTap;
   final bool enabled;
   final String? semanticLabel;
+  final bool? selected;
 
   @override
   State<Pressable> createState() => _PressableState();
@@ -44,10 +57,13 @@ class _PressableState extends State<Pressable> {
   @override
   Widget build(BuildContext context) {
     final active = widget.enabled && widget.onTap != null;
+    final reduce = MediaQuery.disableAnimationsOf(context);
     return Semantics(
       button: true,
       enabled: active,
+      selected: widget.selected,
       label: widget.semanticLabel,
+      excludeSemantics: widget.semanticLabel != null,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: active ? (_) => _set(true) : null,
@@ -55,23 +71,27 @@ class _PressableState extends State<Pressable> {
         onTapCancel: active ? () => _set(false) : null,
         onTap: active ? widget.onTap : null,
         child: AnimatedScale(
-          scale: _down ? 0.96 : 1,
-          duration: const Duration(milliseconds: 120),
-          child: widget.child,
+          scale: _down && !reduce ? 0.96 : 1,
+          duration: motion(context, 120),
+          child: AnimatedOpacity(
+            opacity: _down && reduce ? 0.6 : 1,
+            duration: Duration.zero,
+            child: widget.child,
+          ),
         ),
       ),
     );
   }
 }
 
-/// زر كبسولة
+/// زر كبسولة (ارتفاعه يكبر مع تكبير الخط)
 class PillButton extends StatelessWidget {
   const PillButton({
     super.key,
     required this.label,
     this.onTap,
-    this.bg = AppColors.lime,
-    this.fg = AppColors.ink,
+    this.bg,
+    this.fg,
     this.icon,
     this.height = 64,
     this.enabled = true,
@@ -83,8 +103,8 @@ class PillButton extends StatelessWidget {
 
   final String label;
   final VoidCallback? onTap;
-  final Color bg;
-  final Color fg;
+  final Color? bg;
+  final Color? fg;
   final IconData? icon;
   final double height;
   final bool enabled;
@@ -95,26 +115,28 @@ class PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final b = enabled ? bg : AppColors.disabled;
-    final f = enabled ? fg : AppColors.disabledText;
+    final base = bg ?? AppColors.lime;
+    final b = enabled ? base : AppColors.disabled;
+    final f = enabled ? (fg ?? _fgFor(base)) : AppColors.disabledText;
     return Pressable(
       onTap: onTap,
       enabled: enabled,
+      semanticLabel: label,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        height: height,
-        padding: EdgeInsets.symmetric(horizontal: padding),
+        duration: motion(context, 250),
+        constraints: BoxConstraints(minHeight: height),
+        padding: EdgeInsets.symmetric(horizontal: padding, vertical: 10),
         decoration: BoxDecoration(color: b, borderRadius: BorderRadius.circular(999), border: border),
-        alignment: Alignment.center,
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
               Icon(icon, color: f, size: 22),
               const SizedBox(width: 10),
             ],
             Flexible(
-              child: Text(label, style: ts(fontSize, weight: weight, color: f), overflow: TextOverflow.ellipsis),
+              child: Text(label, textAlign: TextAlign.center, style: ts(fontSize, weight: weight, color: f), maxLines: 2),
             ),
           ],
         ),
@@ -130,8 +152,8 @@ class CircleButton extends StatelessWidget {
     required this.icon,
     this.onTap,
     this.size = 58,
-    this.bg = AppColors.white,
-    this.fg = AppColors.ink,
+    this.bg,
+    this.fg,
     this.semanticLabel,
     this.border,
     this.enabled = true,
@@ -141,8 +163,8 @@ class CircleButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   final double size;
-  final Color bg;
-  final Color fg;
+  final Color? bg;
+  final Color? fg;
   final String? semanticLabel;
   final BoxBorder? border;
   final bool enabled;
@@ -150,40 +172,42 @@ class CircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final base = bg ?? AppColors.white;
     return Pressable(
       onTap: onTap,
       enabled: enabled,
       semanticLabel: semanticLabel,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: motion(context, 250),
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: enabled ? bg : AppColors.disabled,
+          color: enabled ? base : AppColors.disabled,
           shape: BoxShape.circle,
           border: border,
         ),
-        child: Icon(icon, color: enabled ? fg : AppColors.disabledText, size: iconSize),
+        child: Icon(icon, color: enabled ? (fg ?? _fgFor(base)) : AppColors.disabledText, size: iconSize),
       ),
     );
   }
 }
 
-/// زر الرجوع (السهم يتبع اتجاه العربي تلقائياً)
+/// زر الرجوع (السهم يتبع اتجاه العربي تلقائياً) أو الإغلاق في النوافذ المنبثقة
 class BackCircle extends StatelessWidget {
-  const BackCircle({super.key, this.onTap});
+  const BackCircle({super.key, this.onTap, this.close = false});
 
   final VoidCallback? onTap;
+  final bool close;
 
   @override
   Widget build(BuildContext context) => CircleButton(
-        icon: CupertinoIcons.back,
-        semanticLabel: 'رجوع',
+        icon: close ? CupertinoIcons.xmark : CupertinoIcons.back,
+        semanticLabel: close ? 'إغلاق' : 'رجوع',
         onTap: onTap ?? () => Navigator.of(context).maybePop(),
       );
 }
 
-/// العنوان الكبير على سطرين
+/// العنوان الكبير
 class BigTitle extends StatelessWidget {
   const BigTitle(this.text, {super.key, this.size = 42});
 
@@ -193,11 +217,14 @@ class BigTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Text(text, style: ts(size, color: AppColors.title, height: 1.15)),
+        child: Semantics(
+          header: true,
+          child: Text(text, style: ts(size, color: AppColors.title, height: 1.15)),
+        ),
       );
 }
 
-/// بطاقة بيضاء كبيرة وصورة الطبيب مقصوصة في الطرف الأيسر
+/// بطاقة كبيرة وصورة الطبيب مقصوصة في الطرف الأيسر
 class CutCard extends StatelessWidget {
   const CutCard({
     super.key,
@@ -224,11 +251,17 @@ class CutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // مع تكبير الخط، نوسّع عمود النص ونصغّر الصورة عشان ما يتداخلون
+    final scale = (MediaQuery.textScalerOf(context).scale(100) / 100).clamp(1.0, 2.0);
+    final tw = (textWidth * scale).clamp(textWidth, 300.0);
+    final iw = scale > 1.35 ? imageWidth * 0.75 : imageWidth;
+    final ih = scale > 1.35 ? imageHeight * 0.75 : imageHeight;
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(radius),
         boxShadow: shadow ? cardShadow : null,
+        border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -236,9 +269,11 @@ class CutCard extends StatelessWidget {
           Positioned(
             left: -14,
             bottom: 0,
-            width: imageWidth,
-            height: imageHeight,
-            child: Image.asset(image, fit: BoxFit.contain, alignment: Alignment.bottomLeft),
+            width: iw,
+            height: ih,
+            child: ExcludeSemantics(
+              child: Image.asset(image, fit: BoxFit.contain, alignment: Alignment.bottomLeft),
+            ),
           ),
           Padding(
             padding: padding,
@@ -249,7 +284,7 @@ class CutCard extends StatelessWidget {
                 Align(
                   alignment: AlignmentDirectional.topStart,
                   child: SizedBox(
-                    width: textWidth,
+                    width: tw,
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
                   ),
                 ),
@@ -270,6 +305,7 @@ class DayPill extends StatelessWidget {
     required this.top,
     required this.bottom,
     required this.selected,
+    required this.semanticLabel,
     this.closed = false,
     this.dot = false,
     this.onTap,
@@ -280,31 +316,43 @@ class DayPill extends StatelessWidget {
   final bool selected;
   final bool closed;
   final bool dot;
+  final String semanticLabel;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final s = uiScale(context);
     final bg = selected ? AppColors.lime : (closed ? AppColors.closed : AppColors.white);
-    final fg = closed ? AppColors.faint : AppColors.ink;
+    final fg = selected ? AppColors.onAccent : (closed ? AppColors.closedText : AppColors.ink);
     return Pressable(
       onTap: onTap,
       enabled: !closed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: 70,
-        height: 100,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999), boxShadow: pillShadow),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(top, style: ts(21, weight: FontWeight.w500, color: fg)),
-            const SizedBox(height: 2),
-            Text(bottom, style: ts(13, color: fg)),
-            if (dot) ...[
-              const SizedBox(height: 4),
-              Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.ink, shape: BoxShape.circle)),
+      selected: selected,
+      semanticLabel: '$semanticLabel${closed ? '، مغلق' : ''}${dot ? '، فيه موعد' : ''}',
+      child: MediaQuery.withClampedTextScaling(
+        maxScaleFactor: 1.3,
+        child: AnimatedContainer(
+          duration: motion(context, 250),
+          width: 70 * s,
+          height: 100 * s,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: pillShadow,
+            border: selected && highContrast(context) ? Border.all(color: AppColors.ink, width: 2) : null,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(top, style: ts(21, weight: FontWeight.w500, color: fg)),
+              const SizedBox(height: 2),
+              Text(bottom, style: ts(13, color: fg)),
+              if (dot) ...[
+                const SizedBox(height: 4),
+                Container(width: 6, height: 6, decoration: BoxDecoration(color: fg, shape: BoxShape.circle)),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -322,21 +370,26 @@ class FilterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Pressable(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          height: 60,
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? AppColors.ink : AppColors.white,
-            borderRadius: BorderRadius.circular(999),
+        selected: selected,
+        semanticLabel: label,
+        child: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.3,
+          child: AnimatedContainer(
+            duration: motion(context, 250),
+            height: 60 * uiScale(context),
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected ? AppColors.ink : AppColors.white,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(label, style: ts(16, color: selected ? AppColors.white : AppColors.ink)),
           ),
-          child: Text(label, style: ts(16, color: selected ? AppColors.white : AppColors.ink)),
         ),
       );
 }
 
-/// صف أفقي يتمرر يميناً ويساراً بعرض الشاشة
+/// صف أفقي يتمرر بعرض الشاشة (ارتفاعه يكبر شوي مع تكبير الخط)
 class HScroll extends StatelessWidget {
   const HScroll({super.key, required this.height, required this.children, this.gap = 8});
 
@@ -346,7 +399,7 @@ class HScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        height: height,
+        height: height * uiScale(context),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -358,7 +411,7 @@ class HScroll extends StatelessWidget {
       );
 }
 
-/// مفتاح تشغيل وإيقاف بنفس ألوان التطبيق
+/// مفتاح تشغيل وإيقاف
 class AppSwitch extends StatelessWidget {
   const AppSwitch({super.key, required this.value, required this.onChanged});
 
@@ -371,22 +424,25 @@ class AppSwitch extends StatelessWidget {
         child: GestureDetector(
           onTap: onChanged,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
+            duration: motion(context, 220),
             width: 52,
             height: 30,
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: value ? AppColors.ink : const Color(0xFFD5D8DE),
+              color: value ? AppColors.ink : AppColors.switchOff,
               borderRadius: BorderRadius.circular(999),
             ),
             child: AnimatedAlign(
-              duration: const Duration(milliseconds: 220),
+              duration: motion(context, 220),
               curve: Curves.easeOut,
               alignment: value ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
               child: Container(
                 width: 24,
                 height: 24,
-                decoration: BoxDecoration(color: value ? AppColors.lime : AppColors.white, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: value ? AppColors.lime : const Color(0xFFFFFFFF),
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           ),
@@ -394,7 +450,7 @@ class AppSwitch extends StatelessWidget {
       );
 }
 
-/// مربع اختيار دائري الحواف
+/// مربع اختيار
 class AppCheck extends StatelessWidget {
   const AppCheck({super.key, required this.value, required this.onChanged, required this.child});
 
@@ -409,21 +465,21 @@ class AppCheck extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           onTap: onChanged,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 22,
-                  height: 22,
+                  duration: motion(context, 200),
+                  width: 24,
+                  height: 24,
                   margin: const EdgeInsets.only(top: 2),
                   decoration: BoxDecoration(
-                    color: value ? AppColors.ink : AppColors.white,
-                    borderRadius: BorderRadius.circular(6),
+                    color: value ? AppColors.lime : AppColors.white,
+                    borderRadius: BorderRadius.circular(7),
                     border: Border.all(color: AppColors.ink, width: 1.5),
                   ),
-                  child: value ? const Icon(Icons.check_rounded, size: 16, color: AppColors.lime) : null,
+                  child: value ? const Icon(Icons.check_rounded, size: 18, color: AppColors.onAccent) : null,
                 ),
                 const SizedBox(width: 10),
                 Expanded(child: child),
@@ -434,7 +490,7 @@ class AppCheck extends StatelessWidget {
       );
 }
 
-/// حقل إدخال كبسولة أبيض
+/// حقل إدخال كبسولة
 InputDecoration pillInput(String hint) => InputDecoration(
       hintText: hint,
       hintStyle: ts(16, color: AppColors.faint),
@@ -445,6 +501,32 @@ InputDecoration pillInput(String hint) => InputDecoration(
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(999),
-        borderSide: const BorderSide(color: AppColors.ink, width: 2),
+        borderSide: BorderSide(color: AppColors.ink, width: 2),
       ),
     );
+
+/// نافذة منبثقة من تحت بأسلوب iOS (نستخدمها للإشعارات والخيارات)
+Future<void> showAppSheet(BuildContext context, {required String title, required List<Widget> children}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.white,
+    showDragHandle: true,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+    builder: (ctx) => SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(header: true, child: Text(title, style: ts(22, weight: FontWeight.w500))),
+            const SizedBox(height: 14),
+            ...children,
+          ],
+        ),
+      ),
+    ),
+  );
+}

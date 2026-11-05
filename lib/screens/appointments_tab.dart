@@ -46,6 +46,7 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
                   child: DayPill(
                     top: DayInfo(i).dayNum,
                     bottom: DayInfo(i).short,
+                    semanticLabel: DayInfo(i).full,
                     selected: _day == i,
                     dot: s.bookings.any((b) => b.dayIndex == i),
                     onTap: () => setState(() {
@@ -136,7 +137,7 @@ class _AppointmentCard extends StatelessWidget {
     } else if (confirmingCancel) {
       bottom = Container(
         padding: const EdgeInsets.only(top: 10),
-        decoration: BoxDecoration(color: const Color(0xF0FFFFFF), borderRadius: BorderRadius.circular(30)),
+        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(30)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -144,9 +145,9 @@ class _AppointmentCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: PillButton(label: 'نعم، ألغِه', height: 60, fontSize: 16, bg: AppColors.red, fg: AppColors.white, onTap: onCancel)),
+                Expanded(child: PillButton(label: 'تراجع', height: 60, fontSize: 16, bg: AppColors.ink, fg: AppColors.white, onTap: onKeep)),
                 const SizedBox(width: 6),
-                Expanded(child: PillButton(label: 'تراجع', height: 60, fontSize: 16, bg: AppColors.bg, onTap: onKeep)),
+                Expanded(child: PillButton(label: 'نعم، ألغِه', height: 60, fontSize: 16, bg: AppColors.bg, fg: AppColors.red, onTap: onCancel)),
               ],
             ),
           ],
@@ -159,10 +160,9 @@ class _AppointmentCard extends StatelessWidget {
           const SizedBox(width: 6),
           PillButton(
             label: 'إلغاء',
-            bg: AppColors.ink,
-            fg: AppColors.white,
+            bg: AppColors.bg,
+            fg: AppColors.red,
             fontSize: 16,
-            weight: FontWeight.w400,
             padding: 22,
             onTap: onAskCancel,
           ),

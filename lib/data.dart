@@ -3,6 +3,9 @@ library;
 
 const _arDigits = '٠١٢٣٤٥٦٧٨٩';
 
+/// رقم العيادة للتواصل (قيمة تجريبية، غيّرها لرقم العيادة الفعلي)
+const clinicPhone = '+966000000000';
+
 /// يحوّل الأرقام الإنجليزية إلى عربية
 String ar(Object value) => value.toString().replaceAllMapped(
       RegExp(r'\d'),

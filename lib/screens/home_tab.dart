@@ -34,11 +34,15 @@ class HomeTab extends StatelessWidget {
                     height: 58,
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-                    child: Text(s.initial, style: ts(22, weight: FontWeight.w600)),
+                    child: Text(s.initial, style: ts(22, weight: FontWeight.w600, color: AppColors.onAccent)),
                   ),
                 ),
                 const Spacer(),
-                const CircleButton(icon: CupertinoIcons.bell, semanticLabel: 'الإشعارات', bg: Color(0xFFF7F7F8)),
+                CircleButton(
+                  icon: next != null ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
+                  semanticLabel: 'الإشعارات',
+                  onTap: () => _showNotifications(context, next),
+                ),
               ],
             ),
           ),
@@ -65,6 +69,7 @@ class HomeTab extends StatelessWidget {
                     height: 52,
                     fontSize: 15,
                     bg: Colors.transparent,
+                    fg: AppColors.onAccent,
                     border: Border.all(color: const Color(0x1F000000), width: 1.5),
                     onTap: () => s.setTab(1),
                   ),
@@ -85,8 +90,8 @@ class HomeTab extends StatelessWidget {
                 action: Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: Container(
-                    height: 52,
                     padding: const EdgeInsets.symmetric(horizontal: 26),
+                    constraints: const BoxConstraints(minHeight: 52),
                     decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(999)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -169,7 +174,14 @@ class _MiniCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // فوق الليموني النص دايماً أسود (حتى في الوضع الداكن)
+    final onLime = color == AppColors.lime;
+    final fg = onLime ? AppColors.onAccent : AppColors.ink;
+    final fgBody = onLime ? const Color(0xFF333333) : AppColors.body;
+    // البطاقة عرضها ثابت، فنحد تكبير الخط فيها عشان ما يطلع النص برا
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Container(
       width: 286,
       padding: const EdgeInsets.fromLTRB(22, 26, 22, 18),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(42)),
@@ -178,11 +190,11 @@ class _MiniCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: ts(23, height: 1.25)),
+              Text(title, style: ts(23, height: 1.25, color: fg)),
               const SizedBox(height: 8),
               Padding(
                 padding: EdgeInsetsDirectional.only(end: onArrow != null ? 40 : 0),
-                child: Text(body, maxLines: 3, overflow: TextOverflow.ellipsis, style: ts(13, color: AppColors.body, height: 1.6)),
+                child: Text(body, maxLines: 3, overflow: TextOverflow.ellipsis, style: ts(14, color: fgBody, height: 1.5)),
               ),
               const Spacer(),
               action,
@@ -196,6 +208,7 @@ class _MiniCard extends StatelessWidget {
                 icon: Icons.north_west_rounded,
                 size: 62,
                 bg: Colors.transparent,
+                fg: fg,
                 border: Border.all(color: const Color(0x1F000000), width: 1.5),
                 semanticLabel: 'عرض مواعيدي',
                 onTap: onArrow,
@@ -203,6 +216,50 @@ class _MiniCard extends StatelessWidget {
             ),
         ],
       ),
+      ),
     );
   }
+}
+
+/// قائمة الإشعارات (تذكير بالموعد القادم)
+void _showNotifications(BuildContext context, Booking? next) {
+  showAppSheet(
+    context,
+    title: 'الإشعارات',
+    children: [
+      if (next == null)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Text('ما عندك إشعارات جديدة.', textAlign: TextAlign.center, style: ts(16, color: AppColors.body)),
+        )
+      else
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(24)),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+                child: const Icon(CupertinoIcons.bell_fill, size: 20, color: AppColors.onAccent),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('تذكير بموعدك', style: ts(16, weight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text('${next.serviceName} مع ${next.doctor.name}، ${next.day.full} الساعة ${fmtTime(next.time)}',
+                        style: ts(14, color: AppColors.body, height: 1.5)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      const SizedBox(height: 8),
+    ],
+  );
 }

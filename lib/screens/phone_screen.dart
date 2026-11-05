@@ -5,6 +5,7 @@ import '../data.dart';
 import '../main.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'privacy_screen.dart';
 import 'otp_screen.dart';
 
 /// يرجّع الرقم الوطني (٩ أرقام يبدأ بـ ٥) أو null إذا غير صحيح
@@ -71,8 +72,8 @@ class _PhoneScreenState extends State<PhoneScreen> {
                   Directionality(
                     textDirection: TextDirection.ltr,
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      height: 70,
+                      duration: motion(context, 200),
+                      constraints: const BoxConstraints(minHeight: 70),
                       padding: const EdgeInsets.only(left: 8, right: 22),
                       decoration: BoxDecoration(
                         color: AppColors.white,
@@ -82,7 +83,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                       child: Row(
                         children: [
                           Container(
-                            height: 52,
+                            constraints: const BoxConstraints(minHeight: 52),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             alignment: Alignment.center,
                             decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(999)),
@@ -122,15 +123,21 @@ class _PhoneScreenState extends State<PhoneScreen> {
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
               child: Column(
                 children: [
-                  Text.rich(
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).push(iosRoute(const PrivacyScreen())),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text.rich(
                     TextSpan(children: [
                       const TextSpan(text: 'بالمتابعة توافق على '),
-                      TextSpan(text: 'الشروط', style: ts(12, color: AppColors.faint, decoration: TextDecoration.underline)),
+                      TextSpan(text: 'الشروط', style: ts(13, color: AppColors.faint, decoration: TextDecoration.underline)),
                       const TextSpan(text: ' و'),
-                      TextSpan(text: 'سياسة الخصوصية', style: ts(12, color: AppColors.faint, decoration: TextDecoration.underline)),
+                      TextSpan(text: 'سياسة الخصوصية', style: ts(13, color: AppColors.faint, decoration: TextDecoration.underline)),
                     ]),
                     textAlign: TextAlign.center,
-                    style: ts(12, color: AppColors.faint),
+                    style: ts(13, color: AppColors.faint),
+                  ),
+                    ),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
@@ -139,7 +146,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                       label: 'إرسال الرمز',
                       height: 66,
                       bg: valid ? AppColors.lime : AppColors.disabled,
-                      fg: valid ? AppColors.ink : AppColors.disabledText,
+                      fg: valid ? AppColors.onAccent : AppColors.disabledText,
                       onTap: _send,
                     ),
                   ),
