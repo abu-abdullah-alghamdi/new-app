@@ -28,8 +28,9 @@ check_tools() {
 
 # يولّد مجلد iOS أول مرة ويضبط اسم التطبيق والعربية
 ensure_ios() {
-  if [[ ! -d ios ]]; then
-    say "إنشاء مشروع iOS لأول مرة"
+  # إذا مجلد iOS ناقص (مثلاً ملف مشروع Xcode مفقود) يكمّل الملفات الناقصة بدون ما يمسح شي
+  if [[ ! -f ios/Runner.xcodeproj/project.pbxproj || ! -f ios/Runner/Info.plist || ! -d ios/Runner.xcworkspace ]]; then
+    say "تجهيز مشروع iOS (إنشاء الملفات الناقصة)"
     flutter create --platforms=ios --org com.areem --project-name areem_clinics .
   fi
   local plist="ios/Runner/Info.plist"
@@ -51,7 +52,9 @@ detect_ios_min() {
 }
 
 fix_deployment_target() {
-  sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $IOS_MIN;/g" ios/Runner.xcodeproj/project.pbxproj
+  local pbx="ios/Runner.xcodeproj/project.pbxproj"
+  [[ -f "$pbx" ]] || die "ملف مشروع Xcode مفقود ($pbx). شغّل: flutter create --platforms=ios --org com.areem --project-name areem_clinics ."
+  sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $IOS_MIN;/g" "$pbx"
   /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $IOS_MIN" ios/Flutter/AppFrameworkInfo.plist 2>/dev/null || true
   if [[ -f ios/Podfile ]]; then
     sed -i '' -E "s/^#? *platform :ios.*/platform :ios, '$IOS_MIN'/" ios/Podfile
