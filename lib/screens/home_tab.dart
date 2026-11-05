@@ -76,7 +76,7 @@ class HomeTab extends StatelessWidget {
                 ),
               _MiniCard(
                 color: AppColors.white,
-                title: 'خصم ٣٠٪\nعلى باقة الفحص',
+                title: 'خصم 30%\nعلى باقة الفحص',
                 body: 'فحص شامل وتنظيف للأسنان، العرض لفترة محدودة.',
                 action: Align(
                   alignment: AlignmentDirectional.centerStart,

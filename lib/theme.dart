@@ -58,6 +58,6 @@ Duration motion(BuildContext context, int ms) =>
 /// هل المستخدم مفعّل "زيادة التباين"؟ (نستخدمه أيضاً بديلاً عن "تقليل الشفافية")
 bool highContrast(BuildContext context) => MediaQuery.highContrastOf(context);
 
-/// معامل تكبير الخط للعناصر المضغوطة (الكبسولات والشريط) بحد أقصى ١٫٣
+/// معامل تكبير الخط للعناصر المضغوطة (الكبسولات والشريط) بحد أقصى 1.3
 double uiScale(BuildContext context) =>
     (MediaQuery.textScalerOf(context).scale(100) / 100).clamp(1.0, 1.3);

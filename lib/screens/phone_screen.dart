@@ -8,7 +8,7 @@ import '../widgets.dart';
 import 'privacy_screen.dart';
 import 'otp_screen.dart';
 
-/// يرجّع الرقم الوطني (٩ أرقام يبدأ بـ ٥) أو null إذا غير صحيح
+/// يرجّع الرقم الوطني (9 أرقام يبدأ بـ 5) أو null إذا غير صحيح
 String? nationalNumber(String raw) {
   final digits = en(raw).replaceAll(RegExp(r'\D'), '');
   var n = digits;
@@ -61,7 +61,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text('بنرسل لك رمز تحقق من ٤ أرقام على هذا الرقم.', style: ts(15, color: AppColors.body, height: 1.8)),
+                    child: Text('بنرسل لك رمز تحقق من 4 أرقام على هذا الرقم.', style: ts(15, color: AppColors.body, height: 1.8)),
                   ),
                   const SizedBox(height: 22),
                   Padding(
@@ -96,7 +96,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                               autofocus: true,
                               keyboardType: TextInputType.phone,
                               autofillHints: const [AutofillHints.telephoneNumberNational],
-                              inputFormatters: [LengthLimitingTextInputFormatter(12)],
+                              inputFormatters: [const WesternDigits(), LengthLimitingTextInputFormatter(12)],
                               style: ts(20, height: 1.2).copyWith(letterSpacing: 1),
                               decoration: InputDecoration(
                                 hintText: '5X XXX XXXX',
@@ -114,7 +114,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                   if (_error)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                      child: Text('اكتب رقم جوال سعودي صحيح يبدأ بـ ٥ (مثل ٥٥١٢٣٤٥٦٧)', style: ts(14, color: AppColors.red)),
+                      child: Text('اكتب رقم جوال سعودي صحيح يبدأ بـ 5 (مثل 551234567)', style: ts(14, color: AppColors.red)),
                     ),
                 ],
               ),

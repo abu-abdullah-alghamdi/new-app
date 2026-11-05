@@ -1,8 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'data.dart';
 import 'theme.dart';
+
+/// يحوّل أي رقم عربي يكتبه المستخدم (٠١٢…) إلى إنجليزي (012…) أثناء الكتابة
+class WesternDigits extends TextInputFormatter {
+  const WesternDigits();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = en(newValue.text);
+    if (text == newValue.text) return newValue;
+    return newValue.copyWith(text: text);
+  }
+}
 
 /// نمط الخط الموحد للتطبيق (IBM Plex Sans Arabic)
 TextStyle ts(

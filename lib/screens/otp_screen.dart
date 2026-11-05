@@ -17,7 +17,7 @@ const demoCode = '1111';
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key, required this.national});
 
-  /// الرقم الوطني بدون الصفر (٩ أرقام)
+  /// الرقم الوطني بدون الصفر (9 أرقام)
   final String national;
 
   @override
@@ -183,7 +183,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                                 autofocus: true,
                                 keyboardType: TextInputType.number,
                                 autofillHints: const [AutofillHints.oneTimeCode],
-                                inputFormatters: [LengthLimitingTextInputFormatter(4)],
+                                inputFormatters: [const WesternDigits(), LengthLimitingTextInputFormatter(4)],
                                 showCursor: false,
                                 enableInteractiveSelection: false,
                                 onChanged: _onChanged,
@@ -209,7 +209,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                               TextSpan(children: [
                                 const TextSpan(text: 'إعادة الإرسال بعد '),
                                 TextSpan(
-                                  text: '⁦٠:${ar(_left.toString().padLeft(2, '0'))}⁩',
+                                  text: '⁦0:${ar(_left.toString().padLeft(2, '0'))}⁩',
                                   style: ts(14, weight: FontWeight.w600),
                                 ),
                               ]),
@@ -235,7 +235,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(999)),
-                      child: Text('للتجربة: الرمز ١١١١', style: ts(14, color: AppColors.body)),
+                      child: Text('للتجربة: الرمز 1111', style: ts(14, color: AppColors.body)),
                     ),
                   ),
                 ],

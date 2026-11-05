@@ -111,6 +111,7 @@ class _ConfirmScreenState extends State<ConfirmScreen> {
                       controller: _phone,
                       style: ts(16),
                       keyboardType: TextInputType.phone,
+                      inputFormatters: const [WesternDigits()],
                       autofillHints: const [AutofillHints.telephoneNumber],
                       decoration: pillInput('05xxxxxxxx'),
                       onChanged: (_) => setState(() {}),

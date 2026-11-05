@@ -141,7 +141,7 @@ class GlassNavBar extends StatelessWidget {
       );
     }
 
-    // أسماء الشريط ما تكبر مع تكبير الخط (مثل شريط آبل)، وتبقى ١١ كحد أدنى
+    // أسماء الشريط ما تكبر مع تكبير الخط (مثل شريط آبل)، وتبقى 11 كحد أدنى
     return MediaQuery.withNoTextScaling(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),

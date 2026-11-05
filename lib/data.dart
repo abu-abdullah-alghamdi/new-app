@@ -6,13 +6,10 @@ const _arDigits = '٠١٢٣٤٥٦٧٨٩';
 /// رقم العيادة للتواصل (قيمة تجريبية، غيّرها لرقم العيادة الفعلي)
 const clinicPhone = '+966000000000';
 
-/// يحوّل الأرقام الإنجليزية إلى عربية
-String ar(Object value) => value.toString().replaceAllMapped(
-      RegExp(r'\d'),
-      (m) => _arDigits[int.parse(m[0]!)],
-    );
+/// تنسيق الأرقام للعرض (التطبيق يعرض الأرقام بالإنجليزي: 0123456789)
+String ar(Object value) => value.toString();
 
-/// يحوّل الأرقام العربية إلى إنجليزية
+/// يحوّل أي أرقام عربية يكتبها المستخدم (٠١٢…) إلى إنجليزية
 String en(String value) => value.replaceAllMapped(
       RegExp('[٠-٩]'),
       (m) => _arDigits.indexOf(m[0]!).toString(),
@@ -60,7 +57,7 @@ class DayInfo {
   String get longDate => '${ar(date.day)} $month ${ar(date.year)}';
 }
 
-/// الوقت بالدقائق بعد الساعة ٤:٠٠ مساءً
+/// الوقت بالدقائق بعد الساعة 4:00 مساءً
 String fmtTime(int minutesAfter4pm) {
   final total = 16 * 60 + minutesAfter4pm;
   var h = (total ~/ 60) % 12;
@@ -137,9 +134,9 @@ const doctors = [
     n2: 'العتيبي',
     role: 'أخصائية طب أسنان عام',
     cats: ['dental'],
-    years: 'خبرة +٨ سنوات',
+    years: 'خبرة +8 سنوات',
     duration: 45,
-    price: '٢٠٠ ريال',
+    price: '200 ريال',
     availableToday: true,
     image: 'assets/doctors/reem.png',
     about:
@@ -151,9 +148,9 @@ const doctors = [
     n2: 'الزهراني',
     role: 'استشاري تقويم الأسنان',
     cats: ['ortho', 'dental'],
-    years: 'خبرة +١٢ سنة',
+    years: 'خبرة +12 سنة',
     duration: 30,
-    price: '٣٠٠ ريال',
+    price: '300 ريال',
     availableToday: false,
     image: 'assets/doctors/fahd.png',
     about:
@@ -165,9 +162,9 @@ const doctors = [
     n2: 'القحطاني',
     role: 'أخصائية جلدية وليزر',
     cats: ['derma', 'laser'],
-    years: 'خبرة +٦ سنوات',
+    years: 'خبرة +6 سنوات',
     duration: 30,
-    price: '٢٥٠ ريال',
+    price: '250 ريال',
     availableToday: true,
     image: 'assets/doctors/noura.png',
     about:
@@ -179,9 +176,9 @@ const doctors = [
     n2: 'الغامدي',
     role: 'أخصائي جلدية',
     cats: ['derma'],
-    years: 'خبرة +٥ سنوات',
+    years: 'خبرة +5 سنوات',
     duration: 20,
-    price: '٢٠٠ ريال',
+    price: '200 ريال',
     availableToday: false,
     image: 'assets/doctors/sultan.png',
     about:
