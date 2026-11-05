@@ -44,17 +44,25 @@ ensure_ios() {
 }
 
 # يرفع أقل إصدار iOS في المشروع والمكتبات (Xcode الحديث يرفض iOS 13)
+detect_ios_min() {
+  local sdk_min
+  sdk_min=$(plutil -extract SupportedTargets.iphoneos.MinimumDeploymentTarget raw "$(xcrun --sdk iphoneos --show-sdk-path)/SDKSettings.plist" 2>/dev/null || echo "$IOS_MIN")
+  IOS_MIN=$(awk -v a="$sdk_min" -v b="$IOS_MIN" 'BEGIN{split(a,x,".");split(b,y,"."); if (x[1]+0 > y[1]+0) print a; else print b}')
+}
+
 fix_deployment_target() {
   sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $IOS_MIN;/g" ios/Runner.xcodeproj/project.pbxproj
   /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $IOS_MIN" ios/Flutter/AppFrameworkInfo.plist 2>/dev/null || true
   if [[ -f ios/Podfile ]]; then
     sed -i '' -E "s/^#? *platform :ios.*/platform :ios, '$IOS_MIN'/" ios/Podfile
-    IOS_MIN="$IOS_MIN" perl -0pi -e 's/flutter_additional_ios_build_settings\(target\)\n(?!\s*target\.build_configurations)/flutter_additional_ios_build_settings(target)\n    target.build_configurations.each { |c| c.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = "$ENV{IOS_MIN}" }\n/' ios/Podfile
+    sed -i '' -E "s/(\[.IPHONEOS_DEPLOYMENT_TARGET.\] = )['\"][0-9.]+['\"]/\1\"$IOS_MIN\"/" ios/Podfile
+    grep -q 'build_configurations.each' ios/Podfile || perl -0pi -e "s/flutter_additional_ios_build_settings\(target\)\n/flutter_additional_ios_build_settings(target)\n    target.build_configurations.each { |c| c.build_settings[\"IPHONEOS_DEPLOYMENT_TARGET\"] = \"$IOS_MIN\" }\n/" ios/Podfile
   fi
 }
 
 prepare() {
   ensure_ios
+  detect_ios_min
   fix_deployment_target
   say "تحميل الحزم"
   flutter pub get
@@ -63,6 +71,7 @@ prepare() {
   fix_deployment_target
   if [[ -f ios/Podfile ]]; then
     (cd ios && pod install)
+    sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = $IOS_MIN;/g" ios/Pods/Pods.xcodeproj/project.pbxproj 2>/dev/null || true
   fi
 }
 
