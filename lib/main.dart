@@ -52,7 +52,7 @@ class AreemApp extends StatelessWidget {
     return AppScope(
       state: appState,
       child: MaterialApp(
-        title: 'عيادات أريام',
+        title: 'عيادتي',
         debugShowCheckedModeBanner: false,
         locale: const Locale('ar'),
         supportedLocales: const [Locale('ar')],

@@ -41,7 +41,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Flexible(child: Text('عيادات أريام', style: ts(27, weight: FontWeight.w600))),
+                        Flexible(child: Text('عيادتي', style: ts(27, weight: FontWeight.w600))),
                       ],
                     ),
                     const SizedBox(height: 56),
