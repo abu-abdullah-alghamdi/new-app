@@ -42,41 +42,11 @@ class HomeTab extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // المفضلة: قلب وعليه عدد العناصر
-                Pressable(
+                // المفضلة: قلب أسود ثابت (ما يتغير ولا عليه رقم)
+                CircleButton(
+                  icon: CupertinoIcons.heart,
+                  semanticLabel: 'المفضلة',
                   onTap: () => Navigator.of(context).push(iosRoute(const FavoritesScreen())),
-                  semanticLabel: s.favCount == 0 ? 'المفضلة' : 'المفضلة، ${ar(s.favCount)}',
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
-                        child: Icon(
-                          s.favCount > 0 ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                          size: 24,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                      if (s.favCount > 0)
-                        PositionedDirectional(
-                          top: -4,
-                          end: -4,
-                          child: Container(
-                            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppColors.lime,
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: AppColors.bg, width: 2),
-                            ),
-                            child: Text(ar(s.favCount), style: ts(12, weight: FontWeight.w700, color: AppColors.onAccent)),
-                          ),
-                        ),
-                    ],
-                  ),
                 ),
                 const SizedBox(width: 8),
                 CircleButton(

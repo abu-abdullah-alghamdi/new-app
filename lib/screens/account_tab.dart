@@ -7,6 +7,7 @@ import '../main.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'favorites_screen.dart';
 import 'orders_screen.dart';
 import 'phone_screen.dart';
 import 'privacy_screen.dart';
@@ -195,6 +196,7 @@ class AccountTab extends StatelessWidget {
                         ],
                       ),
                       onTap: () => Navigator.of(context).push(iosRoute(const OrdersScreen()))),
+                row('المفضلة', onTap: () => Navigator.of(context).push(iosRoute(const FavoritesScreen()))),
                 row('تذكير المواعيد على واتساب',
                     trailing: AppSwitch(value: s.remindOnWhatsapp, onChanged: s.toggleRemind), onTap: s.toggleRemind),
                 row('تواصل مع العيادة', onTap: () => _contact(context)),

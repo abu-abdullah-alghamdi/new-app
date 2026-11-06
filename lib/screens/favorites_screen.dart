@@ -26,11 +26,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final docs = doctors.where((d) => s.favDoctors.contains(d.id)).toList();
     final svs = services.where((x) => s.favServices.contains(x.id)).toList();
 
-    Widget seg(int i, String label, int count) => Expanded(
+    Widget seg(int i, String label) => Expanded(
           child: Pressable(
             onTap: () => setState(() => _tab = i),
             selected: _tab == i,
-            semanticLabel: '$label، ${ar(count)}',
+            semanticLabel: label,
             child: AnimatedContainer(
               duration: motion(context, 200),
               constraints: const BoxConstraints(minHeight: 54),
@@ -40,7 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                count > 0 ? '$label (${ar(count)})' : label,
+                label,
                 style: ts(16, weight: FontWeight.w500, color: _tab == i ? AppColors.white : AppColors.ink),
               ),
             ),
@@ -81,9 +81,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(999)),
               child: Row(
                 children: [
-                  seg(0, 'الأطباء', docs.length),
+                  seg(0, 'الأطباء'),
                   const SizedBox(width: 4),
-                  seg(1, 'الخدمات', svs.length),
+                  seg(1, 'الخدمات'),
                 ],
               ),
             ),
