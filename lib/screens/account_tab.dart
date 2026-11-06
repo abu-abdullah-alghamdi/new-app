@@ -7,7 +7,10 @@ import '../main.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'orders_screen.dart';
+import 'phone_screen.dart';
 import 'privacy_screen.dart';
+import 'profile_screen.dart';
 import 'shell.dart';
 import 'welcome_screen.dart';
 
@@ -81,7 +84,9 @@ class AccountTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final title = s.name.trim().isNotEmpty ? s.name.trim() : (s.loggedIn ? 'أهلاً بك' : 'زائر');
-    final sub = s.phone.trim().isNotEmpty ? s.phone.trim() : 'سجّل دخولك عشان تحفظ مواعيدك';
+    final sub = s.phone.trim().isNotEmpty
+        ? (s.loggedIn ? displayPhone(s.phone.trim()) : s.phone.trim())
+        : 'سجّل دخولك عشان تحفظ مواعيدك';
 
     Widget row(String label, {Widget? trailing, bool divider = true, VoidCallback? onTap, Color? color}) => Pressable(
           onTap: onTap,
@@ -174,6 +179,22 @@ class AccountTab extends StatelessWidget {
             decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(40)),
             child: Column(
               children: [
+                if (s.loggedIn && s.profile != null)
+                  row('معلوماتي الشخصية',
+                      onTap: () => Navigator.of(context).push(
+                            iosRoute(ProfileScreen(phone: s.profile!.phone, initial: s.profile)),
+                          )),
+                if (s.loggedIn)
+                  row('طلباتي',
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (s.orders.isNotEmpty) Text(ar(s.orders.length), style: ts(16, color: AppColors.faint)),
+                          const SizedBox(width: 6),
+                          Icon(CupertinoIcons.forward, size: 18, color: AppColors.faint),
+                        ],
+                      ),
+                      onTap: () => Navigator.of(context).push(iosRoute(const OrdersScreen()))),
                 row('تذكير المواعيد على واتساب',
                     trailing: AppSwitch(value: s.remindOnWhatsapp, onChanged: s.toggleRemind), onTap: s.toggleRemind),
                 row('تواصل مع العيادة', onTap: () => _contact(context)),
@@ -182,15 +203,26 @@ class AccountTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          PillButton(
-            label: 'تسجيل الخروج',
-            bg: AppColors.white,
-            fontSize: 17,
-            onTap: () {
-              s.logout();
-              Navigator.of(context).pushAndRemoveUntil(iosRoute(const WelcomeScreen()), (_) => false);
-            },
-          ),
+          if (s.loggedIn)
+            PillButton(
+              label: 'تسجيل الخروج',
+              bg: AppColors.white,
+              fontSize: 17,
+              onTap: () {
+                s.logout();
+                Navigator.of(context).pushAndRemoveUntil(iosRoute(const WelcomeScreen()), (_) => false);
+              },
+            )
+          else
+            // الزائر: تسجيل الدخول ثم المعلومات الشخصية، وبعدها يرجع لهذي الصفحة
+            PillButton(
+              label: 'تسجيل الدخول',
+              icon: CupertinoIcons.person_crop_circle,
+              fontSize: 17,
+              onTap: () => Navigator.of(context).push(
+                iosRoute(const PhoneScreen(inside: true), name: loginRouteName),
+              ),
+            ),
           const SizedBox(height: 10),
           if (s.loggedIn)
             PillButton(

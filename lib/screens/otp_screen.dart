@@ -9,16 +9,17 @@ import '../main.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'shell.dart';
+import 'profile_screen.dart';
 
 /// رمز التجربة
 const demoCode = '1111';
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key, required this.national});
+  const OtpScreen({super.key, required this.national, this.inside = false});
 
   /// الرقم الوطني بدون الصفر (9 أرقام)
   final String national;
+  final bool inside;
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -80,8 +81,23 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
       HapticFeedback.lightImpact();
       Future.delayed(const Duration(milliseconds: 450), () {
         if (!mounted) return;
-        AppScope.read(context).login(widget.national);
-        Navigator.of(context).pushAndRemoveUntil(iosRoute(const MainShell()), (_) => false);
+        final s = AppScope.read(context);
+        final phone = '0${widget.national}';
+        if (s.hasAccount(phone)) {
+          // مسجّل من قبل: يدخل مباشرة
+          s.login(widget.national);
+          finishLogin(context, inside: widget.inside);
+        } else {
+          // أول مرة: يعبّي معلوماته الشخصية
+          Navigator.of(context).push(
+            iosRoute(ProfileScreen(phone: phone, inside: widget.inside), name: loginRouteName),
+          ).then((_) {
+            // لو رجع من صفحة المعلومات، نفرّغ الرمز عشان يقدر يكمل من جديد
+            if (!mounted) return;
+            setState(() => _ok = false);
+            _ctrl.clear();
+          });
+        }
       });
     } else {
       HapticFeedback.heavyImpact();

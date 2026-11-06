@@ -57,7 +57,7 @@ class WelcomeScreen extends StatelessWidget {
                       label: 'المتابعة برقم الجوال',
                       icon: Icons.phone_rounded,
                       height: 66,
-                      onTap: () => Navigator.of(context).push(iosRoute(const PhoneScreen())),
+                      onTap: () => Navigator.of(context).push(iosRoute(const PhoneScreen(), name: loginRouteName)),
                     ),
                     const SizedBox(height: 12),
                     Text(

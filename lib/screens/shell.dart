@@ -2,6 +2,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
+import '../data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -9,6 +10,7 @@ import 'account_tab.dart';
 import 'appointments_tab.dart';
 import 'doctors_tab.dart';
 import 'home_tab.dart';
+import 'services_tab.dart';
 
 /// الهيكل الرئيسي: التبويبات + الشريط الزجاجي العائم
 class MainShell extends StatelessWidget {
@@ -25,7 +27,7 @@ class MainShell extends StatelessWidget {
           Positioned.fill(
             child: IndexedStack(
               index: s.tab,
-              children: const [HomeTab(), AppointmentsTab(), DoctorsTab(), AccountTab()],
+              children: const [HomeTab(), AppointmentsTab(), DoctorsTab(), AccountTab(), ServicesTab()],
             ),
           ),
           // تلاشي المحتوى تحت شريط الحالة وتحت الشريط العائم (scroll edge effect)
@@ -118,7 +120,7 @@ class GlassNavBar extends StatelessWidget {
       return Expanded(
         child: Pressable(
           onTap: () => i == 2 ? s.openDoctors() : s.setTab(i),
-          semanticLabel: label,
+          semanticLabel: i == 4 && s.cartCount > 0 ? '$label، في السلة ${ar(s.cartCount)}' : label,
           selected: active,
           child: AnimatedContainer(
             duration: motion(context, 250),
@@ -143,7 +145,7 @@ class GlassNavBar extends StatelessWidget {
     }
 
     // أسماء الشريط ما تكبر مع تكبير الخط (مثل شريط آبل)، وتبقى 11 كحد أدنى
-    // كل الأزرار داخل كبسولة زجاجية وحدة (من اليمين): الرئيسية، مواعيدي، الأطباء، حسابي
+    // كل الأزرار داخل كبسولة زجاجية وحدة (من اليمين): الرئيسية، الأطباء، الخدمات، مواعيدي، حسابي
     return MediaQuery.withNoTextScaling(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -154,11 +156,29 @@ class GlassNavBar extends StatelessWidget {
             child: Row(
               children: [
                 tab(0, 'الرئيسية', (c, a) => Icon(a ? Icons.home_rounded : Icons.home_outlined, size: 23, color: c)),
-                const SizedBox(width: 2),
-                tab(1, 'مواعيدي', (c, a) => Icon(a ? Icons.calendar_month_rounded : Icons.calendar_month_outlined, size: 23, color: c)),
-                const SizedBox(width: 2),
                 tab(2, 'الأطباء', (c, a) => Icon(a ? Icons.medical_services_rounded : Icons.medical_services_outlined, size: 23, color: c)),
-                const SizedBox(width: 2),
+                tab(4, 'الخدمات', (c, a) => Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(a ? Icons.grid_view_rounded : Icons.grid_view_outlined, size: 23, color: c),
+                        // نقطة صغيرة إذا فيه شي في السلة
+                        if (s.cartCount > 0)
+                          PositionedDirectional(
+                            top: -3,
+                            end: -5,
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: AppColors.lime,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.ink, width: 1.5),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )),
+                tab(1, 'مواعيدي', (c, a) => Icon(a ? Icons.calendar_month_rounded : Icons.calendar_month_outlined, size: 23, color: c)),
                 tab(3, 'حسابي', (c, a) => Container(
                       width: 24,
                       height: 24,

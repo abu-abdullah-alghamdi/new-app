@@ -187,12 +187,18 @@ class _MiniCard extends StatelessWidget {
       width: 286,
       padding: const EdgeInsets.fromLTRB(22, 26, 22, 18),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(42)),
+      // الدائرة اللي فيها السهم تطلع شوي برا حدود المحتوى، فما نقصّها
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: ts(23, height: 1.25, color: fg)),
+              Padding(
+                // مسافة عن دائرة السهم عشان العنوان ما يدخل تحتها
+                padding: EdgeInsetsDirectional.only(end: onArrow != null ? 58 : 0),
+                child: Text(title, style: ts(23, height: 1.25, color: fg)),
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: EdgeInsetsDirectional.only(end: onArrow != null ? 40 : 0),

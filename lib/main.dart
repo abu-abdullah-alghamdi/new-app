@@ -85,7 +85,7 @@ class AreemApp extends StatelessWidget {
 
 /// انتقال iOS (انزلاق كامل + سحب من الحافة للرجوع)، ويصير تلاشي بسيط مع "تقليل الحركة"
 class AppRoute<T> extends CupertinoPageRoute<T> {
-  AppRoute({required super.builder, super.fullscreenDialog});
+  AppRoute({required super.builder, super.fullscreenDialog, super.settings});
 
   @override
   Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
@@ -96,7 +96,12 @@ class AppRoute<T> extends CupertinoPageRoute<T> {
   }
 }
 
-Route<T> iosRoute<T>(Widget page) => AppRoute<T>(builder: (_) => page);
+Route<T> iosRoute<T>(Widget page, {String? name}) =>
+    AppRoute<T>(builder: (_) => page, settings: name == null ? null : RouteSettings(name: name));
+
+/// اسم صفحات خطوات تسجيل الدخول (رقم الجوال، الرمز، المعلومات الشخصية)
+/// عشان نرجع للمكان اللي بدأ منه المستخدم بعد ما يخلّص
+const loginRouteName = 'login';
 
 /// نافذة كاملة تطلع من تحت (للمهام المؤقتة مثل الحجز)، وفيها زر إغلاق
 Route<T> iosModal<T>(Widget page) => AppRoute<T>(builder: (_) => page, fullscreenDialog: true);

@@ -1,6 +1,67 @@
 import 'package:flutter/widgets.dart';
 
 import 'data.dart';
+import 'payments.dart';
+import 'services_data.dart';
+
+/// المعلومات الشخصية للمستخدم
+class Profile {
+  const Profile({
+    required this.name,
+    required this.idNumber,
+    required this.gender,
+    required this.birthDate,
+    required this.nationality,
+    required this.phone,
+    this.email = '',
+  });
+
+  final String name;
+  final String idNumber;
+
+  /// 'm' ذكر، 'f' أنثى
+  final String gender;
+  final DateTime birthDate;
+  final String nationality;
+  final String phone;
+  final String email;
+}
+
+/// عنصر في طلب (خدمة وكميتها)
+class OrderItem {
+  const OrderItem(this.service, this.qty);
+
+  final Service service;
+  final int qty;
+
+  int get total => service.price * qty;
+}
+
+/// طلب خدمات مدفوع (أو الدفع في العيادة)
+class Order {
+  const Order({
+    required this.number,
+    required this.items,
+    required this.branchId,
+    required this.subtotal,
+    required this.vat,
+    required this.method,
+    required this.date,
+    required this.reference,
+  });
+
+  final String number;
+  final List<OrderItem> items;
+  final String branchId;
+  final int subtotal;
+  final double vat;
+  final PayMethod method;
+  final DateTime date;
+  final String reference;
+
+  double get total => subtotal + vat;
+  int get count => items.fold(0, (a, b) => a + b.qty);
+}
 
 /// حالة التطبيق العامة
 class AppState extends ChangeNotifier {
@@ -20,9 +81,70 @@ class AppState extends ChangeNotifier {
   String phone = '';
   bool loggedIn = false;
   bool remindOnWhatsapp = true;
+  Profile? profile;
 
-  // التبويب الحالي في الشريط العائم: 0 الرئيسية، 1 مواعيدي، 2 الأطباء، 3 حسابي
+  /// الحسابات المسجلة على هذا الجهاز (للتجربة، بدل الخادم): رقم الجوال ← المعلومات
+  final Map<String, Profile> _accounts = {};
+
+  bool hasAccount(String phone) => _accounts.containsKey(phone);
+
+  /// طلبات كل حساب (ترجع لما يسجّل دخوله مرة ثانية)
+  final Map<String, List<Order>> _savedOrders = {};
+
+  // التبويب الحالي في الشريط العائم:
+  // 0 الرئيسية، 1 مواعيدي، 2 الأطباء، 3 حسابي، 4 الخدمات
   int tab = 0;
+
+  // السلة: رقم الخدمة ← الكمية
+  final Map<String, int> cart = {};
+  final List<Order> orders = [];
+
+  int get cartCount => cart.values.fold(0, (a, b) => a + b);
+  List<OrderItem> get cartItems => [for (final e in cart.entries) OrderItem(serviceById(e.key), e.value)];
+  int get cartSubtotal => cartItems.fold(0, (a, b) => a + b.total);
+  double get cartVat => cartSubtotal * vatRate;
+  double get cartTotal => cartSubtotal + cartVat;
+
+  /// الفروع اللي تتوفر فيها كل الخدمات اللي في السلة
+  List<Branch> get cartBranches => branches
+      .where((b) => cartItems.every((i) => i.service.availableIn.contains(b.id)))
+      .toList();
+
+  void addToCart(String serviceId) {
+    cart[serviceId] = (cart[serviceId] ?? 0) + 1;
+    notifyListeners();
+  }
+
+  void setQty(String serviceId, int qty) {
+    if (qty <= 0) {
+      cart.remove(serviceId);
+    } else {
+      cart[serviceId] = qty.clamp(1, 20);
+    }
+    notifyListeners();
+  }
+
+  void removeFromCart(String serviceId) {
+    cart.remove(serviceId);
+    notifyListeners();
+  }
+
+  Order placeOrder({required String branchId, required PayMethod method, required String reference}) {
+    final o = Order(
+      number: '${10240 + orders.length + 1}',
+      items: cartItems,
+      branchId: branchId,
+      subtotal: cartSubtotal,
+      vat: cartVat,
+      method: method,
+      date: DateTime.now(),
+      reference: reference,
+    );
+    orders.insert(0, o);
+    cart.clear();
+    notifyListeners();
+    return o;
+  }
 
   late List<Booking> bookings;
 
@@ -69,27 +191,52 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// دخول رقم مسجّل من قبل (يرجّع معلوماته)
   void login(String nationalNumber) {
     phone = '0$nationalNumber';
+    profile = _accounts[phone];
+    if (profile != null) name = profile!.name;
+    orders
+      ..clear()
+      ..addAll(_savedOrders[phone] ?? const []);
+    loggedIn = true;
+    notifyListeners();
+  }
+
+  /// حفظ المعلومات الشخصية (أول تسجيل أو تعديل) وتسجيل الدخول
+  void saveProfile(Profile p) {
+    profile = p;
+    name = p.name;
+    phone = p.phone;
+    _accounts[p.phone] = p;
     loggedIn = true;
     notifyListeners();
   }
 
   void logout() {
+    if (phone.isNotEmpty) _savedOrders[phone] = [...orders];
     name = '';
     phone = '';
+    profile = null;
     loggedIn = false;
     tab = 0;
+    cart.clear();
+    orders.clear();
     notifyListeners();
   }
 
   /// حذف الحساب: يمسح بيانات المستخدم ومواعيده من التطبيق
   void deleteAccount() {
+    _accounts.remove(phone);
+    _savedOrders.remove(phone);
     name = '';
     phone = '';
+    profile = null;
     loggedIn = false;
     tab = 0;
     bookings.clear();
+    cart.clear();
+    orders.clear();
     notifyListeners();
   }
 

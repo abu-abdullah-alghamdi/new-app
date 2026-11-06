@@ -18,7 +18,10 @@ String? nationalNumber(String raw) {
 }
 
 class PhoneScreen extends StatefulWidget {
-  const PhoneScreen({super.key});
+  const PhoneScreen({super.key, this.inside = false});
+
+  /// true إذا بدأ التسجيل من داخل التطبيق (زائر): بعد ما يخلّص يرجع لنفس المكان
+  final bool inside;
 
   @override
   State<PhoneScreen> createState() => _PhoneScreenState();
@@ -41,7 +44,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
       return;
     }
     FocusScope.of(context).unfocus();
-    Navigator.of(context).push(iosRoute(OtpScreen(national: n)));
+    Navigator.of(context).push(iosRoute(OtpScreen(national: n, inside: widget.inside), name: loginRouteName));
   }
 
   @override
