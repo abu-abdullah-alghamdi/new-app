@@ -7,6 +7,7 @@ import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
+import 'service_booking_screen.dart';
 import 'services_tab.dart';
 
 /// صفحة الخدمة: الصورة، الاسم، التوفر، التقييم، النبذة، التقييمات، والكمية وزر الإضافة
@@ -164,7 +165,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(28)),
-                      child: Text('ما فيه تقييمات للحين.', textAlign: TextAlign.center, style: ts(15, color: AppColors.body)),
+                      child: Text('لا توجد تقييمات بعد', textAlign: TextAlign.center, style: ts(15, color: AppColors.body)),
                     )
                   else
                     for (final r in reviews) ...[
@@ -182,7 +183,19 @@ class _ServiceScreenState extends State<ServiceScreen> {
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // الأساسي: احجز الخدمة (الفرع ← الطبيب ← اليوم ← الوقت ← الدفع)
+                  PillButton(
+                    label: 'احجز الخدمة · ${money(sv.finalPrice * _qty)}',
+                    icon: CupertinoIcons.calendar,
+                    height: 62,
+                    fontSize: 17,
+                    onTap: () => openServiceBooking(context, [OrderItem(sv, _qty)]),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
                 children: [
                   // الكمية
                   Container(
@@ -224,17 +237,20 @@ class _ServiceScreenState extends State<ServiceScreen> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
+                    // الثانوي: السلة (للي يبي يحجز أكثر من خدمة في نفس الزيارة)
                     child: PillButton(
-                      label: _added ? 'تمت الإضافة' : 'أضف إلى السلة · ${money(sv.finalPrice * _qty)}',
+                      label: _added ? 'تمت الإضافة' : 'أضف إلى السلة',
                       icon: _added ? Icons.check_rounded : CupertinoIcons.bag_badge_plus,
                       height: 60,
                       fontSize: 16,
                       padding: 16,
-                      bg: _added ? AppColors.ink : AppColors.lime,
-                      fg: _added ? AppColors.white : AppColors.onAccent,
+                      bg: _added ? AppColors.ink : AppColors.white,
+                      fg: _added ? AppColors.white : AppColors.ink,
                       onTap: _added ? null : _add,
                     ),
                   ),
+                ],
+              ),
                 ],
               ),
             ),

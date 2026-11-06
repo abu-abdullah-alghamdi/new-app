@@ -64,7 +64,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text('بنرسل لك رمز تحقق من 4 أرقام على هذا الرقم.', style: ts(15, color: AppColors.body, height: 1.8)),
+                    child: Text('بنرسل لك رمز تحقق من 4 أرقام على هذا الرقم', style: ts(15, color: AppColors.body, height: 1.8)),
                   ),
                   const SizedBox(height: 22),
                   Padding(

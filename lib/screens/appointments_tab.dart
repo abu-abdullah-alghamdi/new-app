@@ -1,6 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../data.dart';
+import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -82,9 +85,9 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
                 decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(46)),
                 child: Column(
                   children: [
-                    Text('ما فيه مواعيد هنا', style: ts(22)),
+                    Text('لا توجد مواعيد هنا', style: ts(22)),
                     const SizedBox(height: 8),
-                    Text('غيّر اليوم أو الفلتر، أو احجز موعد جديد.', textAlign: TextAlign.center, style: ts(14, color: AppColors.body)),
+                    Text('غيّر اليوم أو الفلتر، أو احجز موعد جديد', textAlign: TextAlign.center, style: ts(14, color: AppColors.body)),
                     const SizedBox(height: 14),
                     PillButton(label: 'احجز موعد', height: 60, fontSize: 17, onTap: () => s.openDoctors()),
                   ],
@@ -143,7 +146,7 @@ class _AppointmentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('متأكد تبي تلغي الموعد؟', textAlign: TextAlign.center, style: ts(16, color: AppColors.red)),
+            Text('هل تريد إلغاء الموعد؟', textAlign: TextAlign.center, style: ts(16, color: AppColors.red)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -158,6 +161,16 @@ class _AppointmentCard extends StatelessWidget {
     } else {
       bottom = Row(
         children: [
+          // الاتجاهات للفرع (خرائط آبل)
+          CircleButton(
+            icon: CupertinoIcons.location_fill,
+            size: 58,
+            bg: AppColors.ink,
+            fg: AppColors.white,
+            semanticLabel: 'الاتجاهات إلى ${b.branch.name}',
+            onTap: () => launchUrl(b.branch.mapsUri, mode: LaunchMode.externalApplication),
+          ),
+          const SizedBox(width: 6),
           Expanded(child: PillButton(label: 'إعادة جدولة', onTap: () => openBooking(context, d, cat: b.cat, editing: b))),
           const SizedBox(width: 6),
           PillButton(
@@ -182,9 +195,11 @@ class _AppointmentCard extends StatelessWidget {
         Text(d.role, style: ts(15, color: AppColors.body)),
         const SizedBox(height: 12),
         Text(b.completed ? 'مكتمل' : 'قادم', style: ts(28, color: b.completed ? AppColors.green : AppColors.blue)),
-        Text('زيارة في العيادة', style: ts(15)),
+        Text(b.title, style: ts(15)),
         Text(b.day.full, style: ts(15, weight: FontWeight.w500)),
         Text(b.range, style: ts(15)),
+        const SizedBox(height: 4),
+        Text(b.branch.name, style: ts(15, weight: FontWeight.w600)),
       ],
     );
   }

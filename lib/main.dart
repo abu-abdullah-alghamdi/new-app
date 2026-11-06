@@ -5,7 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/onboarding_screen.dart';
-import 'screens/welcome_screen.dart';
+import 'screens/shell.dart';
 import 'state.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -75,7 +75,8 @@ class AreemApp extends StatelessWidget {
             ),
           );
         },
-        home: showOnboarding ? const OnboardingScreen() : const WelcomeScreen(),
+        // يتصفح على طول؛ التسجيل يطلب لما يحجز أو يدفع
+        home: showOnboarding ? const OnboardingScreen() : const MainShell(),
       ),
     );
   }

@@ -84,9 +84,9 @@ class OrdersScreen extends StatelessWidget {
                   children: [
                     Icon(CupertinoIcons.doc_text, size: 44, color: AppColors.faint),
                     const SizedBox(height: 12),
-                    Text('ما عندك طلبات للحين', style: ts(20)),
+                    Text('ما عندك طلبات حتى الآن', style: ts(20)),
                     const SizedBox(height: 6),
-                    Text('طلبات الخدمات اللي تدفعها بتطلع هنا.', style: ts(15, color: AppColors.body)),
+                    Text('طلبات الخدمات اللي تدفعها تظهر هنا', style: ts(15, color: AppColors.body)),
                   ],
                 ),
               )

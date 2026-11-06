@@ -2,13 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../data.dart';
-import '../main.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'payment_screen.dart';
-import 'phone_screen.dart';
+import 'service_booking_screen.dart';
 
 /// صف في ملخص المبلغ
 Widget amountRow(String label, String value, {bool bold = false}) => Padding(
@@ -35,12 +33,15 @@ class AmountSummary extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
         decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(32)),
         child: Column(
-          children: [
-            amountRow('المجموع', money(subtotal)),
-            amountRow('ضريبة القيمة المضافة (${ar((vatRate * 100).round())}%)', money(vat)),
-            Divider(color: AppColors.bg, height: 18, thickness: 1.5),
-            amountRow('الإجمالي', money(subtotal + vat), bold: true),
-          ],
+          children: vat > 0
+              ? [
+                  amountRow('المجموع', money(subtotal)),
+                  amountRow('ضريبة القيمة المضافة (${ar((vatRate * 100).round())}%)', money(vat)),
+                  Divider(color: AppColors.bg, height: 18, thickness: 1.5),
+                  amountRow('الإجمالي', money(subtotal + vat), bold: true),
+                ]
+              // المواطن السعودي (والزائر قبل التسجيل): الإجمالي بس
+              : [amountRow('الإجمالي', money(subtotal), bold: true)],
         ),
       );
 }
@@ -53,42 +54,10 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  String? _branch;
-
-  void _continue(String branchId) {
-    final s = AppScope.read(context);
-    if (!s.loggedIn) {
-      showAppSheet(
-        context,
-        title: 'سجّل دخولك لإكمال الطلب',
-        children: [
-          Text(
-            'نحتاج رقم جوالك ومعلوماتك عشان نربط الطلب بملفك في العيادة. سلتك بتبقى مثل ما هي.',
-            style: ts(15, color: AppColors.body, height: 1.7),
-          ),
-          const SizedBox(height: 16),
-          PillButton(
-            label: 'تسجيل الدخول',
-            onTap: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).push(iosRoute(const PhoneScreen(inside: true), name: loginRouteName));
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      );
-      return;
-    }
-    Navigator.of(context).push(iosRoute(PaymentScreen(branchId: branchId)));
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final items = s.cartItems;
-    final avail = s.cartBranches;
-    // الفرع المختار (أو أول فرع متاح لكل الخدمات)
-    final branchId = avail.any((b) => b.id == _branch) ? _branch : (avail.isNotEmpty ? avail.first.id : null);
 
     return Scaffold(
       body: SafeArea(
@@ -122,28 +91,6 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       const SizedBox(height: 8),
                     ],
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 14, 10, 8),
-                      child: Text('اختر الفرع', style: ts(20, weight: FontWeight.w500)),
-                    ),
-                    if (avail.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(26)),
-                        child: Text(
-                          'الخدمات اللي اخترتها ما تتوفر كلها في فرع واحد. احذف وحدة منها واطلبها بطلب ثاني.',
-                          style: ts(14, color: AppColors.red, height: 1.7),
-                        ),
-                      )
-                    else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final b in avail)
-                            FilterPill(label: b.name, selected: b.id == branchId, onTap: () => setState(() => _branch = b.id)),
-                        ],
-                      ),
                     const SizedBox(height: 14),
                     AmountSummary(subtotal: s.cartSubtotal, vat: s.cartVat),
                   ],
@@ -155,12 +102,13 @@ class _CartScreenState extends State<CartScreen> {
                 padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
                 child: SizedBox(
                   width: double.infinity,
+                  // السلة تكمل في نفس رحلة الحجز: الفرع ← الطبيب ← اليوم ← الوقت ← الدفع
                   child: PillButton(
-                    label: 'متابعة للدفع · ${money(s.cartTotal)}',
+                    label: 'اختيار الموعد · ${money(s.cartTotal)}',
+                    icon: CupertinoIcons.calendar,
                     height: 66,
                     fontSize: 17,
-                    enabled: branchId != null,
-                    onTap: branchId == null ? null : () => _continue(branchId),
+                    onTap: () => openServiceBooking(context, s.cartItems, fromCart: true),
                   ),
                 ),
               ),
@@ -197,7 +145,7 @@ class _Empty extends StatelessWidget {
             const SizedBox(height: 18),
             Text('السلة فاضية', style: ts(24)),
             const SizedBox(height: 6),
-            Text('أضف الخدمات اللي تحتاجها من صفحة الخدمات.', textAlign: TextAlign.center, style: ts(15, color: AppColors.body)),
+            Text('أضف الخدمات اللي تحتاجها من صفحة الخدمات', textAlign: TextAlign.center, style: ts(15, color: AppColors.body)),
             const SizedBox(height: 22),
             PillButton(label: 'تصفح الخدمات', height: 58, fontSize: 16, onTap: onBrowse),
           ],

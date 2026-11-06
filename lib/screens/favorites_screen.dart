@@ -58,7 +58,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: Icon(CupertinoIcons.heart, size: 40, color: AppColors.faint),
               ),
               const SizedBox(height: 16),
-              Text('ما أضفت شي للمفضلة للحين', style: ts(21)),
+              Text('ما أضفت شيئاً للمفضلة حتى الآن', style: ts(21)),
               const SizedBox(height: 6),
               Text(text, textAlign: TextAlign.center, style: ts(15, color: AppColors.body, height: 1.6)),
               const SizedBox(height: 20),
@@ -91,7 +91,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             if (_tab == 0)
               ...(docs.isEmpty
                   ? <Widget>[
-                      empty('اضغط القلب على أي طبيب عشان يطلع هنا.', 'تصفح الأطباء', () {
+                      empty('اضغط القلب على أي طبيب ليظهر هنا', 'تصفح الأطباء', () {
                         Navigator.of(context).pop();
                         s.openDoctors();
                       }),
@@ -102,7 +102,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             else
               ...(svs.isEmpty
                   ? <Widget>[
-                      empty('اضغط القلب على أي خدمة عشان تطلع هنا.', 'تصفح الخدمات', () {
+                      empty('اضغط القلب على أي خدمة لتظهر هنا', 'تصفح الخدمات', () {
                         Navigator.of(context).pop();
                         s.setTab(4);
                       }),

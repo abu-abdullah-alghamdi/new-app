@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data.dart';
+import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -71,8 +72,11 @@ class _DoneScreenState extends State<DoneScreen> {
                     const SizedBox(height: 8),
                     Text(b.day.full, style: ts(22, color: AppColors.blue)),
                     Text(b.range, style: ts(15)),
+                    const SizedBox(height: 4),
+                    Text(b.title, style: ts(14, color: AppColors.body)),
+                    Text(b.branch.name, style: ts(15, weight: FontWeight.w600)),
                     const SizedBox(height: 6),
-                    Text('بيوصلك تذكير على واتساب قبل موعدك بيوم.', style: ts(14, color: AppColors.body)),
+                    Text('يوصلك تذكير على واتساب قبل موعدك بيوم', style: ts(14, color: AppColors.body)),
                   ],
                 ),
                 const Spacer(),

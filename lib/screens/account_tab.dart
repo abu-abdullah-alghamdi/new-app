@@ -14,7 +14,6 @@ import 'phone_screen.dart';
 import 'privacy_screen.dart';
 import 'profile_screen.dart';
 import 'shell.dart';
-import 'welcome_screen.dart';
 
 class AccountTab extends StatelessWidget {
   const AccountTab({super.key});
@@ -60,7 +59,7 @@ class AccountTab extends StatelessWidget {
         title: Text('حذف الحساب؟', style: ts(17, weight: FontWeight.w600)),
         content: Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: Text('بيتم حذف بياناتك ومواعيدك من التطبيق نهائياً، وما تقدر تتراجع.', style: ts(14, height: 1.5)),
+          child: Text('بيتم حذف بياناتك ومواعيدك من التطبيق نهائياً، وما تقدر تتراجع', style: ts(14, height: 1.5)),
         ),
         actions: [
           CupertinoDialogAction(
@@ -78,7 +77,7 @@ class AccountTab extends StatelessWidget {
     );
     if (yes == true && context.mounted) {
       s.deleteAccount();
-      Navigator.of(context).pushAndRemoveUntil(iosRoute(const WelcomeScreen()), (_) => false);
+      Navigator.of(context).popUntil((r) => r.isFirst);
     }
   }
 
@@ -88,7 +87,7 @@ class AccountTab extends StatelessWidget {
     final title = s.name.trim().isNotEmpty ? s.name.trim() : (s.loggedIn ? 'أهلاً بك' : 'زائر');
     final sub = s.phone.trim().isNotEmpty
         ? (s.loggedIn ? displayPhone(s.phone.trim()) : s.phone.trim())
-        : 'سجّل دخولك عشان تحفظ مواعيدك';
+        : 'سجّل دخولك لحفظ مواعيدك';
 
     Widget row(String label, {Widget? trailing, bool divider = true, VoidCallback? onTap, Color? color}) => Pressable(
           onTap: onTap,
@@ -232,7 +231,7 @@ class AccountTab extends StatelessWidget {
               fontSize: 17,
               onTap: () {
                 s.logout();
-                Navigator.of(context).pushAndRemoveUntil(iosRoute(const WelcomeScreen()), (_) => false);
+                Navigator.of(context).popUntil((r) => r.isFirst);
               },
             )
           else

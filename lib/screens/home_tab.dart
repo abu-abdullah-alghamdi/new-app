@@ -46,12 +46,6 @@ class HomeTab extends StatelessWidget {
                   semanticLabel: 'المفضلة',
                   onTap: () => Navigator.of(context).push(iosRoute(const FavoritesScreen())),
                 ),
-                const SizedBox(width: 8),
-                CircleButton(
-                  icon: next != null ? CupertinoIcons.bell_fill : CupertinoIcons.bell,
-                  semanticLabel: 'الإشعارات',
-                  onTap: () => _showNotifications(context, next),
-                ),
               ],
             ),
           )),
@@ -125,7 +119,7 @@ class _NextAppointmentPill extends StatelessWidget {
     final d = booking.doctor;
     return Pressable(
       onTap: () => s.setTab(1),
-      semanticLabel: 'موعدك القادم مع ${d.name}، ${booking.day.full} الساعة ${fmtTime(booking.time)}',
+      semanticLabel: 'موعدك القادم مع ${d.name}، ${booking.day.full} الساعة ${fmtTime(booking.time)}، ${booking.branch.name}',
       child: Container(
         constraints: const BoxConstraints(minHeight: 60),
         padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8),
@@ -145,12 +139,22 @@ class _NextAppointmentPill extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text.rich(
-                TextSpan(children: [
-                  const TextSpan(text: 'موعدك القادم مع '),
-                  TextSpan(text: d.name, style: ts(15, weight: FontWeight.w600)),
-                ]),
-                style: ts(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(children: [
+                      const TextSpan(text: 'موعدك القادم مع '),
+                      TextSpan(text: d.name, style: ts(15, weight: FontWeight.w600)),
+                    ]),
+                    style: ts(15),
+                  ),
+                  // اليوم والوقت والفرع في نظرة وحدة
+                  Text(
+                    '${booking.day.full} · ${fmtTime(booking.time)} · ${booking.branch.name}',
+                    style: ts(13, color: AppColors.body),
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 8),
@@ -509,47 +513,4 @@ class _MiniDoctorCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// قائمة الإشعارات (تذكير بالموعد القادم)
-void _showNotifications(BuildContext context, Booking? next) {
-  showAppSheet(
-    context,
-    title: 'الإشعارات',
-    children: [
-      if (next == null)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text('ما عندك إشعارات جديدة.', textAlign: TextAlign.center, style: ts(16, color: AppColors.body)),
-        )
-      else
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(24)),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-                child: const Icon(CupertinoIcons.bell_fill, size: 20, color: AppColors.onAccent),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('تذكير بموعدك', style: ts(16, weight: FontWeight.w600)),
-                    const SizedBox(height: 2),
-                    Text('${next.serviceName} مع ${next.doctor.name}، ${next.day.full} الساعة ${fmtTime(next.time)}',
-                        style: ts(14, color: AppColors.body, height: 1.5)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      const SizedBox(height: 8),
-    ],
-  );
 }

@@ -179,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
                       child: Text(
-                        'نحتاجها مرة وحدة عشان نفتح لك ملف في العيادة.',
+                        'نحتاجها مرة وحدة لفتح ملفك في العيادة',
                         style: ts(15, color: AppColors.body, height: 1.7),
                       ),
                     ),
@@ -293,14 +293,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       value: _consentData,
                       onChanged: () => setState(() => _consentData = !_consentData),
                       child: Text(
-                        'أوافق على التسجيل ومشاركة بياناتي مع العيادة لإدارة مواعيدي وملفي الطبي.',
+                        'أوافق على التسجيل ومشاركة بياناتي مع العيادة لإدارة مواعيدي وملفي الطبي',
                         style: ts(14, height: 1.7),
                       ),
                     ),
                     AppCheck(
                       value: _consentTerms,
                       onChanged: () => setState(() => _consentTerms = !_consentTerms),
-                      child: Text('أوافق على سياسة الخصوصية والشروط والأحكام.', style: ts(14, height: 1.7)),
+                      child: Text('أوافق على سياسة الخصوصية والشروط والأحكام', style: ts(14, height: 1.7)),
                     ),
                     Padding(
                       padding: const EdgeInsetsDirectional.only(start: 34),
@@ -653,7 +653,7 @@ class _CountrySheetState extends State<_CountrySheet> {
             const SizedBox(height: 8),
             Expanded(
               child: list.isEmpty
-                  ? Center(child: Text('ما لقينا دولة بهالاسم', style: ts(15, color: AppColors.faint)))
+                  ? Center(child: Text('ما لقينا دولة بهذا الاسم', style: ts(15, color: AppColors.faint)))
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,

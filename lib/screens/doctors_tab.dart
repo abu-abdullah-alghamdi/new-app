@@ -71,7 +71,7 @@ class _DoctorsTabState extends State<DoctorsTab> {
               child: Container(
                 padding: const EdgeInsets.all(30),
                 decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(40)),
-                child: Text('ما لقينا نتيجة، جرّب اسم أو تخصص ثاني.', textAlign: TextAlign.center, style: ts(15, color: AppColors.body)),
+                child: Text('ما لقينا نتيجة، جرّب اسم أو تخصص ثاني', textAlign: TextAlign.center, style: ts(15, color: AppColors.body)),
               ),
             ),
           for (final d in list)

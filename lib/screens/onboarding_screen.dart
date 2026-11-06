@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'welcome_screen.dart';
+import 'shell.dart';
 
 /// مفتاح حفظ "شاف الصفحات التعريفية"
 const onboardingSeenKey = 'onboarding_seen';
@@ -18,9 +18,9 @@ class _Page {
 }
 
 const _pages = [
-  _Page('assets/doctors/reem.png', 'احجز موعدك\nبسهولة', 'اختر طبيبك والوقت المناسب لك في ثواني.'),
-  _Page('assets/doctors/noura.png', 'خدمات العيادة\nبين يديك', 'تصفح الخدمات وأسعارها، وأضفها للسلة وادفع بسهولة.'),
-  _Page('assets/doctors/fahd.png', 'ما يفوتك\nموعد', 'نذكّرك بموعدك على واتساب، وتتابع كل زياراتك من مكان واحد.'),
+  _Page('assets/doctors/reem.png', 'احجز موعدك\nبسهولة', 'اختر طبيبك والوقت المناسب لك في ثواني'),
+  _Page('assets/doctors/noura.png', 'خدمات العيادة\nبين يديك', 'تصفح الخدمات وأسعارها، وأضفها للسلة وادفع بسهولة'),
+  _Page('assets/doctors/fahd.png', 'ما يفوتك\nموعد', 'نذكّرك بموعدك على واتساب، وتتابع كل زياراتك من مكان واحد'),
 ];
 
 /// ٣ صفحات تعريفية تطلع أول مرة بس
@@ -51,7 +51,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // لو ما انحفظ، أسوأ شي إنها تطلع مرة ثانية
     }
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(iosRoute(const WelcomeScreen()), (_) => false);
+    Navigator.of(context).pushAndRemoveUntil(iosRoute(const MainShell()), (_) => false);
   }
 
   void _next() {

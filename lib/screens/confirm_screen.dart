@@ -2,61 +2,64 @@ import 'package:flutter/material.dart';
 
 import '../data.dart';
 import '../main.dart';
+import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'privacy_screen.dart';
+import 'cart_screen.dart';
 import 'done_screen.dart';
+import 'login_gate.dart';
+import 'payment_screen.dart';
 
-class ConfirmScreen extends StatefulWidget {
-  const ConfirmScreen({super.key, required this.doctor, required this.cat, required this.day, required this.time});
+/// تأكيد الحجز: ملخص الموعد وزر واحد (بدون أي خانات؛ بيانات المستخدم من ملفه)
+class ConfirmScreen extends StatelessWidget {
+  const ConfirmScreen({
+    super.key,
+    required this.doctor,
+    required this.cat,
+    required this.day,
+    required this.time,
+    required this.branchId,
+    this.items = const [],
+    this.fromCart = false,
+  });
 
   final Doctor doctor;
   final String cat;
   final int day;
   final int time;
+  final String branchId;
 
-  @override
-  State<ConfirmScreen> createState() => _ConfirmScreenState();
-}
+  /// الخدمات المدفوعة (فاضية = زيارة عادية والدفع في العيادة)
+  final List<OrderItem> items;
+  final bool fromCart;
 
-class _ConfirmScreenState extends State<ConfirmScreen> {
-  late final TextEditingController _name;
-  late final TextEditingController _phone;
-  bool _consent = false;
-  bool _marketing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final s = AppScope.read(context);
-    _name = TextEditingController(text: s.name);
-    _phone = TextEditingController(text: s.phone);
-  }
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _phone.dispose();
-    super.dispose();
-  }
-
-  bool get _valid {
-    final digits = en(_phone.text).replaceAll(RegExp(r'\D'), '');
-    return _name.text.trim().length > 1 && digits.length >= 9 && _consent;
-  }
-
-  void _confirm() {
-    if (!_valid) return;
-    final s = AppScope.read(context);
-    s.setProfile(name: _name.text.trim(), phone: _phone.text.trim());
-    final b = s.addBooking(doctorId: widget.doctor.id, cat: widget.cat, day: widget.day, time: widget.time);
-    Navigator.of(context).pushReplacement(iosRoute(DoneScreen(booking: b)));
+  Future<void> _confirm(BuildContext context) async {
+    // قاعدة وحدة: الحجز يحتاج جوال موثّق
+    if (!await requireLogin(context)) return;
+    if (!context.mounted) return;
+    final nav = Navigator.of(context);
+    if (items.isNotEmpty) {
+      nav.push(iosRoute(PaymentScreen(
+        branchId: branchId,
+        items: items,
+        fromCart: fromCart,
+        appointment: Appointment(doctorId: doctor.id, cat: cat, day: day, time: time),
+      )));
+      return;
+    }
+    final b = AppScope.read(context).addBooking(doctorId: doctor.id, cat: cat, day: day, time: time, branchId: branchId);
+    nav.pushReplacement(iosRoute(DoneScreen(booking: b)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.doctor;
+    final s = AppScope.of(context);
+    final d = doctor;
+    final branch = branchById(branchId);
+    final subtotal = items.fold(0, (a, b) => a + b.total);
+    final title = items.isEmpty ? (categories[cat] ?? '') : items.map((i) => i.service.name).join('، ');
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -79,72 +82,32 @@ class _ConfirmScreenState extends State<ConfirmScreen> {
                     children: [
                       Text('${d.n1}\n${d.n2}', style: ts(26, height: 1.2)),
                       const SizedBox(height: 4),
-                      Text(categories[widget.cat] ?? '', style: ts(14, color: AppColors.body)),
+                      Text(title, style: ts(14, color: AppColors.body)),
                       const SizedBox(height: 12),
-                      Text(DayInfo(widget.day).full, style: ts(24, color: AppColors.blue)),
-                      Text(fmtRange(widget.time, d.duration), style: ts(15)),
+                      Text(DayInfo(day).full, style: ts(24, color: AppColors.blue)),
+                      Text(fmtRange(time, d.duration), style: ts(15)),
+                      const SizedBox(height: 6),
+                      Text(branch.name, style: ts(15, weight: FontWeight.w600)),
+                      Text(branch.area, style: ts(13, color: AppColors.faint)),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('الاسم', style: ts(15)),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _name,
-                    style: ts(16),
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.name],
-                    decoration: pillInput('اسمك الكامل'),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 14),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text('رقم الجوال (واتساب)', style: ts(15)),
-                  ),
-                  const SizedBox(height: 6),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: TextField(
-                      controller: _phone,
-                      style: ts(16),
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: const [WesternDigits()],
-                      autofillHints: const [AutofillHints.telephoneNumber],
-                      decoration: pillInput('05xxxxxxxx'),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
                   const SizedBox(height: 10),
-                  AppCheck(
-                    value: _consent,
-                    onChanged: () => setState(() => _consent = !_consent),
-                    child: Text.rich(
-                      TextSpan(children: [
-                        const TextSpan(text: 'أوافق على '),
-                        TextSpan(text: 'سياسة الخصوصية', style: ts(13, decoration: TextDecoration.underline, height: 1.7)),
-                        const TextSpan(text: ' واستخدام بياناتي لإدارة الموعد وإرسال التذكير.'),
-                      ]),
-                      style: ts(13, height: 1.7),
-                    ),
-                  ),
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).push(iosRoute(const PrivacyScreen())),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(44, 4, 10, 12),
-                        child: Text('قراءة سياسة الخصوصية', style: ts(14, decoration: TextDecoration.underline)),
+                  if (items.isNotEmpty)
+                    AmountSummary(subtotal: subtotal, vat: s.vatFor(subtotal))
+                  else
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
+                      decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(32)),
+                      child: Column(
+                        children: [
+                          amountRow('سعر الكشف', d.price, bold: true),
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text('الدفع في العيادة', style: ts(13, color: AppColors.faint)),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  AppCheck(
-                    value: _marketing,
-                    onChanged: () => setState(() => _marketing = !_marketing),
-                    child: Text('أرغب باستقبال العروض والتذكيرات الدورية (اختياري)', style: ts(13, color: AppColors.body, height: 1.7)),
-                  ),
                 ],
               ),
             ),
@@ -152,7 +115,11 @@ class _ConfirmScreenState extends State<ConfirmScreen> {
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
               child: SizedBox(
                 width: double.infinity,
-                child: PillButton(label: 'تأكيد الحجز', height: 66, enabled: _valid, onTap: _confirm),
+                child: PillButton(
+                  label: items.isNotEmpty ? 'متابعة للدفع' : 'تأكيد الحجز',
+                  height: 66,
+                  onTap: () => _confirm(context),
+                ),
               ),
             ),
           ],

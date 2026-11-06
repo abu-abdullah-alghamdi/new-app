@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../data.dart';
 import '../main.dart';
+import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -29,6 +30,7 @@ class BookingScreen extends StatefulWidget {
 class _BookingScreenState extends State<BookingScreen> {
   int? _day;
   int? _time;
+  late String _branch;
   bool _more = false;
 
   Doctor get d => widget.doctor;
@@ -38,6 +40,8 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void initState() {
     super.initState();
+    final mine = branchesOf(d.id);
+    _branch = editing?.branchId ?? (mine.isNotEmpty ? mine.first.id : branches.first.id);
     if (editing != null) {
       _day = editing!.dayIndex;
       _time = editing!.time;
@@ -57,10 +61,10 @@ class _BookingScreenState extends State<BookingScreen> {
     if (_day == null || _time == null) return;
     final s = AppScope.read(context);
     if (editing != null) {
-      final b = s.updateBooking(editing!.id, doctorId: d.id, cat: cat, day: _day!, time: _time!);
+      final b = s.updateBooking(editing!.id, doctorId: d.id, cat: cat, day: _day!, time: _time!, branchId: _branch);
       Navigator.of(context).pushReplacement(iosRoute(DoneScreen(booking: b, edited: true)));
     } else {
-      Navigator.of(context).push(iosRoute(ConfirmScreen(doctor: d, cat: cat, day: _day!, time: _time!)));
+      Navigator.of(context).push(iosRoute(ConfirmScreen(doctor: d, cat: cat, day: _day!, time: _time!, branchId: _branch)));
     }
   }
 
@@ -160,6 +164,21 @@ class _BookingScreenState extends State<BookingScreen> {
                       ],
                     ),
                   )),
+                  // الفروع اللي يداوم فيها الطبيب
+                  const SizedBox(height: 18),
+                  _px(Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text('يداوم في', style: ts(20, weight: FontWeight.w500)),
+                  )),
+                  const SizedBox(height: 10),
+                  _px(Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final b in branchesOf(d.id))
+                        FilterPill(label: b.name, selected: _branch == b.id, onTap: () => setState(() => _branch = b.id)),
+                    ],
+                  )),
                   const SizedBox(height: 18),
                   _px(BigTitle('${monthNames[appToday.month - 1]} ${ar(appToday.year)}', size: 30)),
                   const SizedBox(height: 12),
@@ -199,7 +218,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final i in indexes) _TimePill(
+                      for (final i in indexes) TimePill(
                         text: fmtTime(slotTimes[i]),
                         selected: _time == slotTimes[i],
                         taken: _taken(i),
@@ -243,8 +262,8 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 }
 
-class _TimePill extends StatelessWidget {
-  const _TimePill({required this.text, required this.selected, required this.taken, required this.onTap});
+class TimePill extends StatelessWidget {
+  const TimePill({super.key, required this.text, required this.selected, required this.taken, required this.onTap});
 
   final String text;
   final bool selected;

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import 'countries.dart';
 import 'data.dart';
 import 'payments.dart';
 import 'services_data.dart';
@@ -80,8 +81,8 @@ class AppState extends ChangeNotifier {
     var past = -2;
     if (DayInfo(past).closed) past = -3;
     bookings = [
-      Booking(id: 'seed1', doctorId: 'd2', cat: 'ortho', dayIndex: up, time: 120),
-      Booking(id: 'seed2', doctorId: 'd4', cat: 'derma', dayIndex: past, time: 60),
+      Booking(id: 'seed1', doctorId: 'd2', cat: 'ortho', dayIndex: up, time: 120, branchId: 'rawdah'),
+      Booking(id: 'seed2', doctorId: 'd4', cat: 'derma', dayIndex: past, time: 60, branchId: 'hamdaniyah'),
     ];
   }
 
@@ -111,8 +112,14 @@ class AppState extends ChangeNotifier {
   int get cartCount => cart.values.fold(0, (a, b) => a + b);
   List<OrderItem> get cartItems => [for (final e in cart.entries) OrderItem(serviceById(e.key), e.value)];
   int get cartSubtotal => cartItems.fold(0, (a, b) => a + b.total);
-  double get cartVat => cartSubtotal * vatRate;
+  double get cartVat => vatFor(cartSubtotal);
   double get cartTotal => cartSubtotal + cartVat;
+
+  /// ضريبة القيمة المضافة: المواطن السعودي ما عليه ضريبة على الخدمات الصحية الخاصة، والمقيم 15%.
+  /// الزائر ما تنحسب له لين يسجّل (الدفع يحتاج تسجيل دخول أصلاً)
+  bool get chargesVat => loggedIn && profile != null && profile!.nationality != saudiArabia;
+
+  double vatFor(int subtotal) => chargesVat ? subtotal * vatRate : 0;
 
   /// الفروع اللي تتوفر فيها كل الخدمات اللي في السلة
   List<Branch> get cartBranches => branches
@@ -154,19 +161,26 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Order placeOrder({required String branchId, required PayMethod method, required String reference}) {
+  Order placeOrder({
+    required List<OrderItem> items,
+    required String branchId,
+    required PayMethod method,
+    required String reference,
+    bool clearCart = false,
+  }) {
+    final subtotal = items.fold(0, (a, b) => a + b.total);
     final o = Order(
       number: '${10240 + orders.length + 1}',
-      items: cartItems,
+      items: items,
       branchId: branchId,
-      subtotal: cartSubtotal,
-      vat: cartVat,
+      subtotal: subtotal,
+      vat: vatFor(subtotal),
       method: method,
       date: DateTime.now(),
       reference: reference,
     );
     orders.insert(0, o);
-    cart.clear();
+    if (clearCart) cart.clear();
     notifyListeners();
     return o;
   }
@@ -292,26 +306,36 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Booking addBooking({required String doctorId, required String cat, required int day, required int time}) {
+  Booking addBooking({
+    required String doctorId,
+    required String cat,
+    required int day,
+    required int time,
+    required String branchId,
+    List<String> serviceIds = const [],
+  }) {
     final b = Booking(
       id: 'b${DateTime.now().microsecondsSinceEpoch}',
       doctorId: doctorId,
       cat: cat,
       dayIndex: day,
       time: time,
+      branchId: branchId,
+      serviceIds: serviceIds,
     );
     bookings.add(b);
     notifyListeners();
     return b;
   }
 
-  Booking updateBooking(String id, {required String doctorId, required String cat, required int day, required int time}) {
+  Booking updateBooking(String id, {required String doctorId, required String cat, required int day, required int time, String? branchId}) {
     final b = bookings.firstWhere((x) => x.id == id);
     b
       ..doctorId = doctorId
       ..cat = cat
       ..dayIndex = day
-      ..time = time;
+      ..time = time
+      ..branchId = branchId ?? b.branchId;
     notifyListeners();
     return b;
   }

@@ -86,7 +86,7 @@ class ServicesTab extends StatelessWidget {
           )),
           px(Padding(
             padding: const EdgeInsets.fromLTRB(6, 8, 6, 10),
-            child: Text('اختر الخدمة وأضفها للسلة، وبعدها اختر الفرع وطريقة الدفع.', style: ts(15, color: AppColors.body, height: 1.7)),
+            child: Text('اختر الخدمة وأضفها للسلة، وبعدها اختر الفرع وطريقة الدفع', style: ts(15, color: AppColors.body, height: 1.7)),
           )),
           // فلترة حسب التخصص
           HScroll(

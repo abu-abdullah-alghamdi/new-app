@@ -10,6 +10,7 @@ import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'cart_screen.dart';
+import 'done_screen.dart';
 import 'orders_screen.dart';
 
 IconData payIcon(PayMethod m) => switch (m) {
@@ -19,11 +20,26 @@ IconData payIcon(PayMethod m) => switch (m) {
       PayMethod.cash => Icons.storefront_rounded,
     };
 
+/// الموعد اللي ينحجز بعد الدفع
+class Appointment {
+  const Appointment({required this.doctorId, required this.cat, required this.day, required this.time});
+
+  final String doctorId;
+  final String cat;
+  final int day;
+  final int time;
+}
+
 /// صفحة الدفع (شكلية لين يتم الربط مع بوابة دفع حقيقية — شوف lib/payments.dart)
 class PaymentScreen extends StatefulWidget {
-  const PaymentScreen({super.key, required this.branchId});
+  const PaymentScreen({super.key, required this.branchId, required this.items, this.appointment, this.fromCart = false});
 
   final String branchId;
+  final List<OrderItem> items;
+
+  /// لو موجود: بعد الدفع ينحجز الموعد ويطلع في "مواعيدي"
+  final Appointment? appointment;
+  final bool fromCart;
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -36,6 +52,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final _expiry = TextEditingController();
   final _cvv = TextEditingController();
   bool _paying = false;
+
+  int get _subtotal => widget.items.fold(0, (a, b) => a + b.total);
 
   @override
   void dispose() {
@@ -62,7 +80,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final s = AppScope.read(context);
     setState(() => _paying = true);
     final result = await PaymentGateway.instance.pay(
-      amount: s.cartTotal,
+      amount: _subtotal + s.vatFor(_subtotal),
       method: _method,
       card: _method.needsCard
           ? CardDetails(number: _digits(_number), holder: _holder.text.trim(), expiry: _expiry.text, cvv: _digits(_cvv))
@@ -77,8 +95,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return;
     }
     HapticFeedback.mediumImpact();
-    final order = s.placeOrder(branchId: widget.branchId, method: _method, reference: result.reference ?? '');
-    Navigator.of(context).pushAndRemoveUntil(iosRoute(OrderDoneScreen(order: order)), (r) => r.isFirst);
+    final order = s.placeOrder(
+      items: widget.items,
+      branchId: widget.branchId,
+      method: _method,
+      reference: result.reference ?? '',
+      clearCart: widget.fromCart,
+    );
+    final a = widget.appointment;
+    if (a != null) {
+      // الخدمة تصير موعد في "مواعيدي"
+      final b = s.addBooking(
+        doctorId: a.doctorId,
+        cat: a.cat,
+        day: a.day,
+        time: a.time,
+        branchId: widget.branchId,
+        serviceIds: [for (final i in widget.items) i.service.id],
+      );
+      Navigator.of(context).pushAndRemoveUntil(iosRoute(DoneScreen(booking: b)), (r) => r.isFirst);
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(iosRoute(OrderDoneScreen(order: order)), (r) => r.isFirst);
+    }
   }
 
   Widget _label(String text) => Padding(
@@ -106,7 +144,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final total = s.cartTotal;
+    final total = _subtotal + s.vatFor(_subtotal);
     final payLabel = _paying
         ? 'جاري الدفع…'
         : (_method == PayMethod.cash ? 'تأكيد الطلب · ${money(total)}' : 'ادفع ${money(total)}');
@@ -143,7 +181,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'وضع تجريبي: لن يتم خصم أي مبلغ، وبيانات البطاقة ما تنحفظ ولا تنرسل.',
+                              'وضع تجريبي: لن يتم خصم أي مبلغ، ولا تُحفظ بيانات البطاقة أو تُرسل',
                               style: ts(14, height: 1.6),
                             ),
                           ),
@@ -165,14 +203,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        for (final it in s.cartItems)
+                        for (final it in widget.items)
                           amountRow('${it.service.name}${it.qty > 1 ? ' × ${ar(it.qty)}' : ''}', money(it.total)),
                         const SizedBox(height: 8),
                       ],
                     ),
                   ),
                   const SizedBox(height: 10),
-                  AmountSummary(subtotal: s.cartSubtotal, vat: s.cartVat),
+                  AmountSummary(subtotal: _subtotal, vat: s.vatFor(_subtotal)),
                   _label('طريقة الدفع'),
                   for (final m in PayMethod.values) ...[
                     _MethodTile(method: m, selected: _method == m, onTap: () => setState(() => _method = m)),
@@ -359,8 +397,8 @@ class OrderDoneScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     cash
-                        ? 'الدفع عند زيارتك للفرع. بيتواصل معك الفرع لتحديد موعد الخدمة.'
-                        : 'تم الدفع (تجريبي). بيتواصل معك الفرع لتحديد موعد الخدمة.',
+                        ? 'الدفع عند زيارتك للفرع، ويتواصل معك الفرع لتحديد موعد الخدمة'
+                        : 'تم الدفع (تجريبي)، ويتواصل معك الفرع لتحديد موعد الخدمة',
                     textAlign: TextAlign.center,
                     style: ts(15, color: AppColors.body, height: 1.7),
                   ),
