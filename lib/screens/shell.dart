@@ -1,6 +1,5 @@
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../state.dart';
@@ -34,14 +33,15 @@ class MainShell extends StatelessWidget {
             left: 0,
             right: 0,
             top: 0,
-            height: top + 8,
+            height: top + 28,
             child: IgnorePointer(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [bg, bg.withAlpha(0)],
+                    colors: [bg.withAlpha(225), bg.withAlpha(150), bg.withAlpha(0)],
+                    stops: const [0, 0.55, 1],
                   ),
                 ),
               ),
@@ -115,87 +115,60 @@ class GlassNavBar extends StatelessWidget {
     Widget tab(int i, String label, Widget Function(Color c, bool active) icon) {
       final active = s.tab == i;
       final c = active ? AppColors.ink : AppColors.glassLabel;
-      return Pressable(
-        onTap: () => s.setTab(i),
-        semanticLabel: label,
-        selected: active,
-        child: AnimatedContainer(
-          duration: motion(context, 250),
-          curve: Curves.easeOut,
-          width: 84,
-          height: 56,
-          decoration: BoxDecoration(
-            color: active ? AppColors.glassActive : Colors.transparent,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: active ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 2))] : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              icon(c, active),
-              const SizedBox(height: 2),
-              Text(label, style: ts(11, weight: FontWeight.w600, color: c)),
-            ],
+      return Expanded(
+        child: Pressable(
+          onTap: () => i == 2 ? s.openDoctors() : s.setTab(i),
+          semanticLabel: label,
+          selected: active,
+          child: AnimatedContainer(
+            duration: motion(context, 250),
+            curve: Curves.easeOut,
+            height: 56,
+            decoration: BoxDecoration(
+              color: active ? AppColors.glassActive : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: active ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 2))] : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                icon(c, active),
+                const SizedBox(height: 2),
+                Text(label, maxLines: 1, style: ts(11, weight: FontWeight.w600, color: c)),
+              ],
+            ),
           ),
         ),
       );
     }
 
     // أسماء الشريط ما تكبر مع تكبير الخط (مثل شريط آبل)، وتبقى 11 كحد أدنى
+    // كل الأزرار داخل كبسولة زجاجية وحدة (من اليمين): الرئيسية، مواعيدي، الأطباء، حسابي
     return MediaQuery.withNoTextScaling(
       child: Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            _Glass(
-              radius: BorderRadius.circular(999),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    tab(0, 'الرئيسية', (c, a) => Icon(a ? Icons.home_rounded : Icons.home_outlined, size: 23, color: c)),
-                    const SizedBox(width: 2),
-                    tab(1, 'مواعيدي', (c, a) => Icon(a ? Icons.calendar_month_rounded : Icons.calendar_month_outlined, size: 23, color: c)),
-                    const SizedBox(width: 2),
-                    tab(3, 'حسابي', (c, a) => Container(
-                          width: 24,
-                          height: 24,
-                          alignment: Alignment.center,
-                          decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-                          child: Text(s.initial, style: ts(12, weight: FontWeight.w700, color: AppColors.onAccent)),
-                        )),
-                  ],
-                ),
-              ),
+        child: _Glass(
+          radius: BorderRadius.circular(999),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Row(
+              children: [
+                tab(0, 'الرئيسية', (c, a) => Icon(a ? Icons.home_rounded : Icons.home_outlined, size: 23, color: c)),
+                const SizedBox(width: 2),
+                tab(1, 'مواعيدي', (c, a) => Icon(a ? Icons.calendar_month_rounded : Icons.calendar_month_outlined, size: 23, color: c)),
+                const SizedBox(width: 2),
+                tab(2, 'الأطباء', (c, a) => Icon(a ? Icons.medical_services_rounded : Icons.medical_services_outlined, size: 23, color: c)),
+                const SizedBox(width: 2),
+                tab(3, 'حسابي', (c, a) => Container(
+                      width: 24,
+                      height: 24,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+                      child: Text(s.initial, style: ts(12, weight: FontWeight.w700, color: AppColors.onAccent)),
+                    )),
+              ],
             ),
-            const Spacer(),
-            // زر البحث المنفصل في الطرف (مكانه المعتمد عند آبل)
-            Pressable(
-              onTap: () => s.openDoctors(),
-              semanticLabel: 'البحث عن طبيب',
-              selected: s.tab == 2,
-              child: _Glass(
-                radius: BorderRadius.circular(999),
-                child: SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: Center(
-                    child: AnimatedContainer(
-                      duration: motion(context, 250),
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: s.tab == 2 ? AppColors.glassActive : Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(CupertinoIcons.search, size: 24, color: s.tab == 2 ? AppColors.ink : AppColors.glassLabel),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

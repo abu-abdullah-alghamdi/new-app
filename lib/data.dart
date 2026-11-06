@@ -98,6 +98,10 @@ class Doctor {
     required this.availableToday,
     required this.image,
     required this.about,
+    required this.patients,
+    required this.yearsCount,
+    required this.rating,
+    required this.reviews,
   });
 
   final String id;
@@ -111,6 +115,14 @@ class Doctor {
   final bool availableToday;
   final String image;
   final String about;
+
+  /// أرقام تجريبية للعرض (تُستبدل بالأرقام الحقيقية قبل النشر)
+  final int patients;
+  final int yearsCount;
+  final double rating;
+  final int reviews;
+
+  String get ratingText => rating.toStringAsFixed(1);
 
   String get name => '$n1 $n2';
   String get durationText => '${ar(duration)} دقيقة';
@@ -141,6 +153,10 @@ const doctors = [
     image: 'assets/doctors/reem.png',
     about:
         'أخصائية طب أسنان عام، تهتم بالوقاية والعلاج التجميلي للأسنان مثل الحشوات التجميلية والتنظيف العميق. تحرص على شرح الخطة العلاجية بوضوح وتجربة مريحة قدر الإمكان، وتتعامل مع الأطفال والكبار.',
+    patients: 640,
+    yearsCount: 8,
+    rating: 4.9,
+    reviews: 96,
   ),
   Doctor(
     id: 'd2',
@@ -155,6 +171,10 @@ const doctors = [
     image: 'assets/doctors/fahd.png',
     about:
         'استشاري تقويم الأسنان، متخصص في التقويم الشفاف والتقليدي وتصحيح إطباق الفك. يبدأ مع كل مريض بتقييم كامل وخطة علاج واضحة المدة والمراحل، مع متابعة دورية حتى نهاية العلاج.',
+    patients: 1200,
+    yearsCount: 12,
+    rating: 4.8,
+    reviews: 210,
   ),
   Doctor(
     id: 'd3',
@@ -169,6 +189,10 @@ const doctors = [
     image: 'assets/doctors/noura.png',
     about:
         'أخصائية الأمراض الجلدية والتجميل، تعالج حب الشباب والتصبغات ومشاكل البشرة، وتشرف على جلسات الليزر. تهتم بوضع خطة مناسبة لنوع البشرة مع روتين عناية منزلي سهل.',
+    patients: 480,
+    yearsCount: 6,
+    rating: 4.9,
+    reviews: 135,
   ),
   Doctor(
     id: 'd4',
@@ -183,6 +207,10 @@ const doctors = [
     image: 'assets/doctors/sultan.png',
     about:
         'أخصائي جلدية، يعالج الأكزيما والصدفية وتساقط الشعر والالتهابات الجلدية. يركز على التشخيص الدقيق والمتابعة المنتظمة لضمان أفضل نتيجة.',
+    patients: 350,
+    yearsCount: 5,
+    rating: 4.7,
+    reviews: 72,
   ),
 ];
 

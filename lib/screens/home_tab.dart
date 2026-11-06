@@ -17,10 +17,12 @@ class HomeTab extends StatelessWidget {
     final next = s.upcoming.isNotEmpty ? s.upcoming.first : null;
     final greet = s.firstName.isNotEmpty ? '${s.firstName}!' : 'نوّرتنا!';
 
+    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
     return SafeArea(
+      top: false,
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 22, 14, navBottomSpace),
+        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 22, 14, navBottomSpace),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),

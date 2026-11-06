@@ -125,10 +125,12 @@ class AccountTab extends StatelessWidget {
           ),
         );
 
+    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
     return SafeArea(
+      top: false,
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 30, 14, navBottomSpace),
+        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 30, 14, navBottomSpace),
         children: [
           const BigTitle('حسابي'),
           const SizedBox(height: 14),

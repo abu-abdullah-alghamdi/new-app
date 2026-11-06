@@ -120,11 +120,39 @@ class _BookingScreenState extends State<BookingScreen> {
                       Text('${d.n1}\n${d.n2}', style: ts(30, height: 1.2)),
                       const SizedBox(height: 6),
                       Text(d.role, style: ts(15, color: AppColors.body)),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
+                      _RatingLine(doctor: d),
+                      const SizedBox(height: 12),
                       Text('${d.years} · ${d.durationText}', style: ts(15, color: AppColors.body)),
                       const SizedBox(height: 4),
                       Text(d.price, style: ts(26)),
                     ],
+                  )),
+                  const SizedBox(height: 10),
+                  _px(_DoctorStats(doctor: d)),
+                  const SizedBox(height: 10),
+                  _px(Container(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                    decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(40)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('عن الطبيب', style: ts(20, weight: FontWeight.w500)),
+                        const SizedBox(height: 6),
+                        AnimatedSize(
+                          duration: motion(context, 250),
+                          alignment: Alignment.topCenter,
+                          child: Text(about, style: ts(14, color: AppColors.body, height: 1.85)),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => _more = !_more),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Text(_more ? 'عرض أقل' : 'اقرأ المزيد', style: ts(15, decoration: TextDecoration.underline)),
+                          ),
+                        ),
+                      ],
+                    ),
                   )),
                   const SizedBox(height: 18),
                   _px(BigTitle('${monthNames[appToday.month - 1]} ${ar(appToday.year)}', size: 30)),
@@ -172,30 +200,6 @@ class _BookingScreenState extends State<BookingScreen> {
                         onTap: () => setState(() => _time = slotTimes[i]),
                       ),
                     ],
-                  )),
-                  const SizedBox(height: 18),
-                  _px(Container(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-                    decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(40)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('عن الطبيب', style: ts(20, weight: FontWeight.w500)),
-                        const SizedBox(height: 6),
-                        AnimatedSize(
-                          duration: motion(context, 250),
-                          alignment: Alignment.topCenter,
-                          child: Text(about, style: ts(14, color: AppColors.body, height: 1.85)),
-                        ),
-                        GestureDetector(
-                          onTap: () => setState(() => _more = !_more),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Text(_more ? 'عرض أقل' : 'اقرأ المزيد', style: ts(15, decoration: TextDecoration.underline)),
-                          ),
-                        ),
-                      ],
-                    ),
                   )),
                 ],
               ),
@@ -260,6 +264,94 @@ class _TimePill extends StatelessWidget {
           textAlign: TextAlign.center,
           style: ts(16, weight: FontWeight.w500, color: fg, decoration: taken ? TextDecoration.lineThrough : null),
         ),
+      ),
+    );
+  }
+}
+
+/// النجمة والتقييم وعدد التقييمات تحت اسم الطبيب
+class _RatingLine extends StatelessWidget {
+  const _RatingLine({required this.doctor});
+
+  final Doctor doctor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'التقييم ${doctor.ratingText} من 5، ${ar(doctor.reviews)} تقييم',
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star_rounded, size: 22, color: Color(0xFFFFC107)),
+            const SizedBox(width: 4),
+            Text(doctor.ratingText, style: ts(16, weight: FontWeight.w600)),
+            const SizedBox(width: 4),
+            Flexible(child: Text('(${ar(doctor.reviews)} تقييم)', style: ts(14, color: AppColors.body))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// صف الأرقام: المرضى، سنوات الخبرة، التقييم، التقييمات
+class _DoctorStats extends StatelessWidget {
+  const _DoctorStats({required this.doctor});
+
+  final Doctor doctor;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (Icons.person_rounded, '${ar(doctor.patients)}+', 'المرضى', '${ar(doctor.patients)} مريض وأكثر'),
+      (Icons.verified_rounded, '${ar(doctor.yearsCount)}+', 'سنوات الخبرة', '${ar(doctor.yearsCount)} سنوات خبرة وأكثر'),
+      (Icons.star_rounded, doctor.ratingText, 'التقييم', 'التقييم ${doctor.ratingText}'),
+      (Icons.chat_bubble_rounded, '${ar(doctor.reviews)}+', 'التقييمات', '${ar(doctor.reviews)} تقييم وأكثر'),
+    ];
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 22, 10, 18),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(40),
+        border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final (icon, value, label, spoken) in items)
+            Expanded(
+              child: Semantics(
+                label: spoken,
+                child: ExcludeSemantics(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+                        child: Icon(icon, size: 28, color: AppColors.onAccent),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        value,
+                        textDirection: TextDirection.ltr,
+                        textAlign: TextAlign.center,
+                        style: ts(20, weight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        style: ts(13, color: AppColors.body, height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

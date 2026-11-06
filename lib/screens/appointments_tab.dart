@@ -27,10 +27,12 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
         .where((b) => _day == null || b.dayIndex == _day)
         .toList();
 
+    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
     return SafeArea(
+      top: false,
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 30, 0, navBottomSpace),
+        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 30, 0, navBottomSpace),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),

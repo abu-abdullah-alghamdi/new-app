@@ -33,10 +33,12 @@ class _DoctorsTabState extends State<DoctorsTab> {
         .where((d) => q.isEmpty || '${d.name} ${d.role}'.contains(q))
         .toList();
 
+    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
     return SafeArea(
+      top: false,
       bottom: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 30, 0, navBottomSpace),
+        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 30, 0, navBottomSpace),
         children: [
           const Padding(padding: EdgeInsets.symmetric(horizontal: 14), child: BigTitle('ابحث\nعن طبيبك')),
           const SizedBox(height: 14),
