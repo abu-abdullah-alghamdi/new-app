@@ -68,26 +68,37 @@ class ServicesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
+    final list = servicesIn(s.serviceCatFilter);
+    Widget px(Widget w) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: w);
     return SafeArea(
       top: false,
       bottom: false,
       child: ListView(
         // لما يطلع شريط "عرض السلة" نزيد المسافة تحت عشان ما يغطي آخر خدمة
-        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 30, 14, navBottomSpace + (s.cartCount > 0 ? cartBarSpace : 0)),
+        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 30, 0, navBottomSpace + (s.cartCount > 0 ? cartBarSpace : 0)),
         children: [
-          Row(
+          px(Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Expanded(child: BigTitle('الخدمات')),
               CartButton(count: s.cartCount),
             ],
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(6, 8, 6, 14),
+          )),
+          px(Padding(
+            padding: const EdgeInsets.fromLTRB(6, 8, 6, 10),
             child: Text('اختر الخدمة وأضفها للسلة، وبعدها اختر الفرع وطريقة الدفع.', style: ts(15, color: AppColors.body, height: 1.7)),
+          )),
+          // فلترة حسب التخصص
+          HScroll(
+            height: 60,
+            children: [
+              for (final f in categoryFilters)
+                FilterPill(label: f.label, selected: s.serviceCatFilter == f.id, onTap: () => s.setServiceCat(f.id)),
+            ],
           ),
-          for (final sv in services) ...[
-            ServiceCard(service: sv),
+          const SizedBox(height: 8),
+          for (final sv in list) ...[
+            px(ServiceCard(service: sv)),
             const SizedBox(height: 10),
           ],
         ],
@@ -96,7 +107,6 @@ class ServicesTab extends StatelessWidget {
   }
 }
 
-/// زر السلة وعليه عدد العناصر
 class CartButton extends StatelessWidget {
   const CartButton({super.key, required this.count});
 

@@ -251,7 +251,22 @@ const serviceReviews = {
   ],
 };
 
+/// تخصص كل خدمة
+const serviceCat = {
+  's1': 'dental',
+  's2': 'dental',
+  's3': 'dental',
+  's4': 'dental',
+  's5': 'ortho',
+  's6': 'derma',
+  's7': 'laser',
+  's8': 'derma',
+};
+
 extension ServiceDetails on Service {
+  String get cat => serviceCat[id] ?? '';
   String get about => serviceAbout[id] ?? '';
   List<Review> get reviewList => serviceReviews[id] ?? const [];
 }
+
+List<Service> servicesIn(String? cat) => cat == null ? services : services.where((x) => x.cat == cat).toList();

@@ -216,6 +216,20 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // فلتر صفحة الخدمات (null = الكل)
+  String? serviceCatFilter;
+
+  void openServices([String? cat]) {
+    serviceCatFilter = cat;
+    tab = 4;
+    notifyListeners();
+  }
+
+  void setServiceCat(String? cat) {
+    serviceCatFilter = cat;
+    notifyListeners();
+  }
+
   /// دخول رقم مسجّل من قبل (يرجّع معلوماته)
   void login(String nationalNumber) {
     phone = '0$nationalNumber';

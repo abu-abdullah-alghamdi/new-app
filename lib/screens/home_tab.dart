@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../data.dart';
 import '../main.dart';
+import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -62,6 +63,13 @@ class HomeTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Text('هلا،\n$greet', style: ts(38, height: 1.25)),
           ),
+          const SizedBox(height: 18),
+          // التخصصات (نص بس، بدون أيقونات)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 10),
+            child: Semantics(header: true, child: Text('التخصصات', style: ts(22, weight: FontWeight.w500))),
+          ),
+          const SpecialtiesGrid(),
           const SizedBox(height: 14),
           DoctorPriceCard(doctor: doctors.first),
           const SizedBox(height: 14),
@@ -278,5 +286,148 @@ void _showNotifications(BuildContext context, Booking? next) {
         ),
       const SizedBox(height: 8),
     ],
+  );
+}
+
+String doctorsCount(int n) => switch (n) {
+      0 => 'ما فيه أطباء',
+      1 => 'طبيب واحد',
+      2 => 'طبيبين',
+      _ when n <= 10 => '${ar(n)} أطباء',
+      _ => '${ar(n)} طبيب',
+    };
+
+String servicesCount(int n) => switch (n) {
+      0 => 'ما فيه خدمات',
+      1 => 'خدمة وحدة',
+      2 => 'خدمتين',
+      _ when n <= 10 => '${ar(n)} خدمات',
+      _ => '${ar(n)} خدمة',
+    };
+
+/// شبكة التخصصات (2 × 2): اسم التخصص بخط كبير وتحته عدد الأطباء والخدمات
+class SpecialtiesGrid extends StatelessWidget {
+  const SpecialtiesGrid({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile(int i) {
+      final sp = specialties[i];
+      final docs = doctors.where((d) => d.cats.contains(sp.id)).length;
+      final svs = servicesIn(sp.id).length;
+      final lime = i == 0;
+      final fg = lime ? AppColors.onAccent : AppColors.ink;
+      return Expanded(
+        child: Pressable(
+          onTap: () => showSpecialtySheet(context, sp.id, sp.name),
+          semanticLabel: '${sp.name}، ${doctorsCount(docs)}، ${servicesCount(svs)}',
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 128),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            decoration: BoxDecoration(
+              color: lime ? AppColors.lime : AppColors.white,
+              borderRadius: BorderRadius.circular(34),
+              border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(sp.name, style: ts(26, height: 1.2, color: fg)),
+                const SizedBox(height: 18),
+                Text(
+                  '${doctorsCount(docs)} · ${servicesCount(svs)}',
+                  style: ts(13, color: lime ? const Color(0xB3000000) : AppColors.body),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var r = 0; r < specialties.length; r += 2) ...[
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                tile(r),
+                const SizedBox(width: 10),
+                if (r + 1 < specialties.length) tile(r + 1) else const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+          if (r + 2 < specialties.length) const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+}
+
+/// نافذة التخصص: اختيار الأطباء أو الخدمات
+Future<void> showSpecialtySheet(BuildContext context, String id, String name) {
+  final s = AppScope.read(context);
+  final docs = doctors.where((d) => d.cats.contains(id)).length;
+  final svs = servicesIn(id).length;
+
+  Widget option(BuildContext ctx, String title, String sub, bool enabled, VoidCallback go) => Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Pressable(
+          onTap: enabled
+              ? () {
+                  Navigator.of(ctx).pop();
+                  go();
+                }
+              : null,
+          semanticLabel: '$title، $sub',
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 84),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+            decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(28)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(title, style: ts(21, weight: FontWeight.w600, color: enabled ? AppColors.ink : AppColors.faint)),
+                      const SizedBox(height: 2),
+                      Text(sub, style: ts(14, color: AppColors.body)),
+                    ],
+                  ),
+                ),
+                Icon(CupertinoIcons.forward, size: 20, color: enabled ? AppColors.ink : AppColors.faint),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  return showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.white,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+    builder: (ctx) => SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(header: true, child: Text(name, style: ts(30))),
+            const SizedBox(height: 4),
+            Text('وش تبي تشوف؟', style: ts(15, color: AppColors.body)),
+            const SizedBox(height: 16),
+            option(ctx, 'الأطباء', doctorsCount(docs), docs > 0, () => s.openDoctors(id)),
+            option(ctx, 'الخدمات', servicesCount(svs), svs > 0, () => s.openServices(id)),
+          ],
+        ),
+      ),
+    ),
   );
 }

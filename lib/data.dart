@@ -77,6 +77,14 @@ const categories = {
   'laser': 'جلسة ليزر',
 };
 
+/// التخصصات اللي تطلع في الصفحة الرئيسية
+const List<({String id, String name})> specialties = [
+  (id: 'dental', name: 'الأسنان'),
+  (id: 'ortho', name: 'التقويم'),
+  (id: 'derma', name: 'الجلدية'),
+  (id: 'laser', name: 'الليزر'),
+];
+
 const List<({String? id, String label})> categoryFilters = [
   (id: null, label: 'الكل'),
   (id: 'dental', label: 'أسنان'),
