@@ -9,6 +9,7 @@ import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'cart_screen.dart';
+import 'service_screen.dart';
 import 'shell.dart';
 
 const starColor = Color(0xFFFFB800);
@@ -182,7 +183,13 @@ class _ServiceCardState extends State<ServiceCard> {
   @override
   Widget build(BuildContext context) {
     final sv = widget.service;
-    return Container(
+    final s = AppScope.of(context);
+    void open() => Navigator.of(context).push(iosRoute(ServiceScreen(service: sv)));
+    // الضغط على البطاقة يفتح صفحة الخدمة (زر + والقلب لهم ضغطتهم الخاصة)
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: open,
+      child: Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -198,7 +205,15 @@ class _ServiceCardState extends State<ServiceCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                MergeSemantics(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        button: true,
+                        hint: 'عرض تفاصيل الخدمة',
+                        onTap: open,
+                        child: MergeSemantics(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -227,6 +242,18 @@ class _ServiceCardState extends State<ServiceCard> {
                       ),
                     ],
                   ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    FavButton(
+                      active: s.favServices.contains(sv.id),
+                      name: sv.name,
+                      size: 44,
+                      bg: AppColors.bg,
+                      onTap: () => s.toggleFavService(sv.id),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -261,6 +288,7 @@ class _ServiceCardState extends State<ServiceCard> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

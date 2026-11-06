@@ -80,6 +80,11 @@ class _DoctorsTabState extends State<DoctorsTab> {
               child: CutCard(
                 image: d.image,
                 textWidth: 180,
+                corner: FavButton(
+                  active: s.favDoctors.contains(d.id),
+                  name: d.name,
+                  onTap: () => s.toggleFavDoctor(d.id),
+                ),
                 bottom: PillButton(label: 'احجز موعد', onTap: () => openBooking(context, d, cat: s.doctorCat)),
                 children: [
                   Text('${d.n1}\n${d.n2}', style: ts(32, height: 1.2)),

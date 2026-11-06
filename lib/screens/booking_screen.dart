@@ -75,6 +75,7 @@ class _BookingScreenState extends State<BookingScreen> {
         ? (_day == null ? 'اختر اليوم والوقت' : 'اختر الوقت')
         : '${editing != null ? 'حفظ: ' : 'احجز '}${DayInfo(_day!).label} ${fmtTime(_time!)}';
     final about = _more || d.about.length <= 95 ? d.about : '${d.about.substring(0, 95)}…';
+    final s = AppScope.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -112,6 +113,11 @@ class _BookingScreenState extends State<BookingScreen> {
                   const SizedBox(height: 14),
                   _px(CutCard(
                     image: d.image,
+                    corner: FavButton(
+                      active: s.favDoctors.contains(d.id),
+                      name: d.name,
+                      onTap: () => s.toggleFavDoctor(d.id),
+                    ),
                     imageWidth: 166,
                     imageHeight: 222,
                     textWidth: 185,

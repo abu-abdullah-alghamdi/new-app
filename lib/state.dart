@@ -110,8 +110,24 @@ class AppState extends ChangeNotifier {
       .where((b) => cartItems.every((i) => i.service.availableIn.contains(b.id)))
       .toList();
 
-  void addToCart(String serviceId) {
-    cart[serviceId] = (cart[serviceId] ?? 0) + 1;
+  void addToCart(String serviceId, {int qty = 1}) {
+    cart[serviceId] = ((cart[serviceId] ?? 0) + qty).clamp(1, 20);
+    notifyListeners();
+  }
+
+  // المفضلة (تشتغل للزائر أيضاً)
+  final Set<String> favDoctors = {};
+  final Set<String> favServices = {};
+
+  int get favCount => favDoctors.length + favServices.length;
+
+  void toggleFavDoctor(String id) {
+    if (!favDoctors.remove(id)) favDoctors.add(id);
+    notifyListeners();
+  }
+
+  void toggleFavService(String id) {
+    if (!favServices.remove(id)) favServices.add(id);
     notifyListeners();
   }
 
@@ -229,6 +245,8 @@ class AppState extends ChangeNotifier {
   void deleteAccount() {
     _accounts.remove(phone);
     _savedOrders.remove(phone);
+    favDoctors.clear();
+    favServices.clear();
     name = '';
     phone = '';
     profile = null;

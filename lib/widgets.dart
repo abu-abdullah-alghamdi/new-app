@@ -251,7 +251,11 @@ class CutCard extends StatelessWidget {
     this.padding = const EdgeInsets.fromLTRB(26, 30, 26, 22),
     this.radius = 46,
     this.shadow = true,
+    this.corner,
   });
+
+  /// زر صغير في الزاوية العلوية (مثل قلب المفضلة)
+  final Widget? corner;
 
   final String image;
   final List<Widget> children;
@@ -306,6 +310,7 @@ class CutCard extends StatelessWidget {
               ],
             ),
           ),
+          if (corner != null) PositionedDirectional(top: 16, end: 16, child: corner!),
         ],
       ),
     );
@@ -543,4 +548,41 @@ Future<void> showAppSheet(BuildContext context, {required String title, required
       ),
     ),
   );
+}
+
+/// زر القلب للمفضلة (فاضي / معبّى)
+class FavButton extends StatelessWidget {
+  const FavButton({super.key, required this.active, required this.onTap, required this.name, this.size = 48, this.bg});
+
+  final bool active;
+  final VoidCallback onTap;
+  final String name;
+  final double size;
+  final Color? bg;
+
+  @override
+  Widget build(BuildContext context) => Pressable(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        selected: active,
+        semanticLabel: active ? 'إزالة $name من المفضلة' : 'إضافة $name للمفضلة',
+        child: AnimatedContainer(
+          duration: motion(context, 200),
+          width: size,
+          height: size,
+          decoration: BoxDecoration(color: bg ?? AppColors.white, shape: BoxShape.circle, boxShadow: pillShadow),
+          child: AnimatedSwitcher(
+            duration: motion(context, 180),
+            transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
+            child: Icon(
+              active ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
+              key: ValueKey(active),
+              size: size * 0.46,
+              color: AppColors.ink,
+            ),
+          ),
+        ),
+      );
 }
