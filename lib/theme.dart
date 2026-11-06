@@ -37,10 +37,10 @@ class AppColors {
   static Color get switchOff => _p(0xFFD5D8DE, 0xFF3A3A3C);
 
   // الزجاج العائم
-  static Color get glassFill => _p(0x8CFAFAFC, 0x8C1C1C1E);
-  static Color get glassBorder => _p(0xB3FFFFFF, 0x33FFFFFF);
-  static Color get glassActive => _p(0xEBFFFFFF, 0xEB3A3A3C);
-  static Color get glassLabel => _p(0xFF4D4D4D, 0xFFC7C7CC);
+  static Color get glassFill => _p(0x4DFFFFFF, 0x8C1C1C1E);
+  static Color get glassBorder => _p(0x99FFFFFF, 0x33FFFFFF);
+  static Color get glassActive => _p(0x6BFFFFFF, 0xEB3A3A3C);
+  static Color get glassLabel => _p(0xFF1C1C1E, 0xFFC7C7CC);
 }
 
 List<BoxShadow> get cardShadow => [
