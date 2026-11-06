@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../main.dart';
@@ -9,8 +12,12 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'booking_screen.dart';
 import 'favorites_screen.dart';
+import 'service_screen.dart';
+import 'services_tab.dart';
 import 'shell.dart';
 
+/// الصفحة الرئيسية:
+/// الترحيب ← الموعد القادم (لو موجود) ← البانرات (الحجز + العرض) ← الأكثر طلباً ← أطباؤنا
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
 
@@ -25,24 +32,14 @@ class HomeTab extends StatelessWidget {
       top: false,
       bottom: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 22, 14, navBottomSpace),
+        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 22, 0, navBottomSpace),
         children: [
-          Padding(
+          _px(Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Pressable(
-                  onTap: () => s.setTab(3),
-                  semanticLabel: 'حسابي',
-                  child: Container(
-                    width: 58,
-                    height: 58,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-                    child: Text(s.initial, style: ts(22, weight: FontWeight.w600, color: AppColors.onAccent)),
-                  ),
-                ),
-                const Spacer(),
+                Expanded(child: Text('هلا،\n$greet', style: ts(38, height: 1.25))),
                 // المفضلة: قلب أسود ثابت (ما يتغير ولا عليه رقم)
                 CircleButton(
                   icon: CupertinoIcons.heart,
@@ -57,190 +54,458 @@ class HomeTab extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text('هلا،\n$greet', style: ts(38, height: 1.25)),
-          ),
-          const SizedBox(height: 18),
-          // التخصصات (نص بس، بدون أيقونات)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(6, 0, 6, 10),
-            child: Semantics(header: true, child: Text('التخصصات', style: ts(22, weight: FontWeight.w500))),
-          ),
-          const SpecialtiesGrid(),
-          const SizedBox(height: 14),
-          DoctorPriceCard(doctor: doctors.first),
-          const SizedBox(height: 14),
-          HScroll(
-            height: 236,
-            gap: 10,
-            children: [
-              if (next != null)
-                _MiniCard(
-                  color: AppColors.lime,
-                  title: 'موعدك\nالقادم',
-                  body: '${next.serviceName} مع ${next.doctor.name}، ${next.day.full} الساعة ${fmtTime(next.time)}',
-                  onArrow: () => s.setTab(1),
-                  action: PillButton(
-                    label: 'عرض الموعد',
-                    height: 52,
-                    fontSize: 15,
-                    bg: Colors.transparent,
-                    fg: AppColors.onAccent,
-                    border: Border.all(color: const Color(0x1F000000), width: 1.5),
-                    onTap: () => s.setTab(1),
-                  ),
-                ),
-              _MiniCard(
-                color: AppColors.white,
-                title: 'خصم 30%\nعلى باقة الفحص',
-                body: 'فحص شامل وتنظيف للأسنان، العرض لفترة محدودة.',
-                action: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: PillButton(label: 'احجز العرض', height: 52, fontSize: 15, onTap: () => s.openDoctors('dental')),
-                ),
-              ),
-              _MiniCard(
-                color: AppColors.white,
-                title: 'تذكير\nعلى واتساب',
-                body: 'نرسل لك تذكير قبل موعدك بيوم، وتأكد أو تعدّل بضغطة.',
-                action: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 26),
-                    constraints: const BoxConstraints(minHeight: 52),
-                    decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(999)),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: s.remindOnWhatsapp ? AppColors.green : AppColors.faint,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(s.remindOnWhatsapp ? 'مفعّل' : 'متوقف', style: ts(15, weight: FontWeight.w500)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          for (final d in doctors.skip(1)) ...[
-            const SizedBox(height: 14),
-            DoctorPriceCard(doctor: d),
+          )),
+          if (next != null) ...[
+            const SizedBox(height: 16),
+            _px(_NextAppointmentPill(booking: next)),
           ],
+          const SizedBox(height: 16),
+          const _BannerCarousel(),
+          _SectionHeader(title: 'الأكثر طلباً', onAll: () => s.openServices()),
+          HScroll(
+            height: 268,
+            gap: 10,
+            children: [for (final sv in popularServices) _MiniServiceCard(service: sv)],
+          ),
+          _SectionHeader(title: 'أطباؤنا', onAll: () => s.openDoctors()),
+          HScroll(
+            height: 232,
+            gap: 10,
+            children: [for (final d in doctors) _MiniDoctorCard(doctor: d)],
+          ),
         ],
       ),
     );
   }
 }
 
-/// بطاقة طبيب كبيرة: الاسم، التخصص، أقرب موعد، السعر، وزر الحجز
-class DoctorPriceCard extends StatelessWidget {
-  const DoctorPriceCard({super.key, required this.doctor});
+Widget _px(Widget w) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: w);
 
-  final Doctor doctor;
+/// عنوان قسم و"عرض الكل"
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.onAll});
+
+  final String title;
+  final VoidCallback onAll;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 10, 6),
+        child: Row(
+          children: [
+            Expanded(child: Semantics(header: true, child: Text(title, style: ts(22, weight: FontWeight.w500)))),
+            Semantics(
+              button: true,
+              label: 'عرض كل $title',
+              child: ExcludeSemantics(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onAll,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    child: Text('عرض الكل', style: ts(15, decoration: TextDecoration.underline)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// شريط الموعد القادم: صورة الطبيب، "موعدك القادم مع ..."، ودائرة فيها سهم
+class _NextAppointmentPill extends StatelessWidget {
+  const _NextAppointmentPill({required this.booking});
+
+  final Booking booking;
 
   @override
   Widget build(BuildContext context) {
-    void open() => openBooking(context, doctor);
-    return CutCard(
-      image: doctor.image,
-      imageWidth: 200,
-      imageHeight: 286,
-      textWidth: 180,
-      bottom: Row(
-        children: [
-          Expanded(child: PillButton(label: 'احجز موعد', icon: CupertinoIcons.calendar, onTap: open)),
-          const SizedBox(width: 6),
-          CircleButton(
-            icon: Icons.north_west_rounded,
-            size: 64,
-            bg: AppColors.lime,
-            semanticLabel: 'ملف ${doctor.name}',
-            onTap: open,
-          ),
-        ],
+    final s = AppScope.read(context);
+    final d = booking.doctor;
+    return Pressable(
+      onTap: () => s.setTab(1),
+      semanticLabel: 'موعدك القادم مع ${d.name}، ${booking.day.full} الساعة ${fmtTime(booking.time)}',
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 60),
+        padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+              child: Image.asset(d.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(children: [
+                  const TextSpan(text: 'موعدك القادم مع '),
+                  TextSpan(text: d.name, style: ts(15, weight: FontWeight.w600)),
+                ]),
+                style: ts(15),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
+              child: Icon(CupertinoIcons.forward, size: 18, color: AppColors.ink),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+/// البانرات: الحجز + العرض. تتبدل لحالها كل 5 ثواني أو بالسحب
+class _BannerCarousel extends StatefulWidget {
+  const _BannerCarousel();
+
+  @override
+  State<_BannerCarousel> createState() => _BannerCarouselState();
+}
+
+class _BannerCarouselState extends State<_BannerCarousel> {
+  final _ctrl = PageController();
+  Timer? _timer;
+  int _index = 0;
+  bool _visible = true;
+  static const _count = 2;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _restart();
+  }
+
+  /// يبدأ التبديل التلقائي من جديد (ويوقف مع "تقليل الحركة")
+  void _restart() {
+    _timer?.cancel();
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_ctrl.hasClients) return;
+      // ما يتبدل إذا التبويب مو ظاهر
+      if (!_visible) return;
+      final next = (_index + 1) % _count;
+      _ctrl.animateToPage(next, duration: const Duration(milliseconds: 450), curve: Curves.easeInOutCubic);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _visible = TickerMode.of(context);
+    final h = 262 * uiScale(context);
+    return Column(
       children: [
-        Text('${doctor.n1}\n${doctor.n2}', style: ts(32, height: 1.2)),
-        const SizedBox(height: 6),
-        Text(doctor.role, style: ts(15, color: AppColors.body)),
-        const SizedBox(height: 18),
-        Text(doctor.nextFull, style: ts(15, color: AppColors.body)),
-        const SizedBox(height: 4),
-        Text(doctor.price, style: ts(28)),
+        SizedBox(
+          height: h,
+          child: NotificationListener<ScrollStartNotification>(
+            // لو المستخدم سحب بنفسه، نعيد عدّاد التبديل التلقائي
+            onNotification: (n) {
+              if (n.dragDetails != null) _restart();
+              return false;
+            },
+            child: PageView(
+              controller: _ctrl,
+              onPageChanged: (i) => setState(() => _index = i),
+              children: const [
+                Padding(padding: EdgeInsets.symmetric(horizontal: 14), child: _BookBanner()),
+                Padding(padding: EdgeInsets.symmetric(horizontal: 14), child: _OfferBanner()),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Semantics(
+          label: 'بانر ${_index + 1} من $_count',
+          child: ExcludeSemantics(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < _count; i++)
+                  AnimatedContainer(
+                    duration: motion(context, 250),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == _index ? 22 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: i == _index ? AppColors.ink : AppColors.disabled,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _MiniCard extends StatelessWidget {
-  const _MiniCard({required this.color, required this.title, required this.body, required this.action, this.onArrow});
-
-  final Color color;
-  final String title;
-  final String body;
-  final Widget action;
-  final VoidCallback? onArrow;
+/// بانر "احجز موعدك بثواني"
+class _BookBanner extends StatelessWidget {
+  const _BookBanner();
 
   @override
   Widget build(BuildContext context) {
-    // فوق الليموني النص دايماً أسود (حتى في الوضع الداكن)
-    final onLime = color == AppColors.lime;
-    final fg = onLime ? AppColors.onAccent : AppColors.ink;
-    final fgBody = onLime ? const Color(0xFF333333) : AppColors.body;
-    // البطاقة عرضها ثابت، فنحد تكبير الخط فيها عشان ما يطلع النص برا
-    return MediaQuery.withClampedTextScaling(
-      maxScaleFactor: 1.3,
-      child: Container(
-      width: 286,
-      padding: const EdgeInsets.fromLTRB(22, 26, 22, 18),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(42)),
-      // الدائرة اللي فيها السهم تطلع شوي برا حدود المحتوى، فما نقصّها
+    final s = AppScope.read(context);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.lime,
+        borderRadius: BorderRadius.circular(42),
+        border: highContrast(context) ? Border.all(color: AppColors.ink, width: 2) : null,
+      ),
       child: Stack(
-        clipBehavior: Clip.none,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                // مسافة عن دائرة السهم عشان العنوان ما يدخل تحتها
-                padding: EdgeInsetsDirectional.only(end: onArrow != null ? 58 : 0),
-                child: Text(title, style: ts(23, height: 1.25, color: fg)),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsetsDirectional.only(end: onArrow != null ? 40 : 0),
-                child: Text(body, maxLines: 3, overflow: TextOverflow.ellipsis, style: ts(14, color: fgBody, height: 1.5)),
-              ),
-              const Spacer(),
-              action,
-            ],
+          PositionedDirectional(
+            end: 0,
+            bottom: 0,
+            top: 56,
+            child: ExcludeSemantics(
+              child: Image.asset('assets/doctors/reem.png', fit: BoxFit.contain, alignment: Alignment.bottomLeft),
+            ),
           ),
-          if (onArrow != null)
-            PositionedDirectional(
-              end: -8,
-              top: -12,
-              child: CircleButton(
-                icon: Icons.north_west_rounded,
-                size: 62,
-                bg: Colors.transparent,
-                fg: fg,
-                border: Border.all(color: const Color(0x1F000000), width: 1.5),
-                semanticLabel: 'عرض مواعيدي',
-                onTap: onArrow,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 22),
+            child: FractionallySizedBox(
+              widthFactor: 0.56,
+              alignment: AlignmentDirectional.topStart,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(header: true, child: Text('احجز موعدك\nبثواني', style: ts(32, height: 1.2, color: AppColors.onAccent))),
+                  const SizedBox(height: 8),
+                  Text(
+                    'اختر التخصص والطبيب والوقت اللي يناسبك',
+                    style: ts(15, height: 1.6, color: const Color(0xB8000000)),
+                  ),
+                  const Spacer(),
+                  PillButton(
+                    label: 'احجز الآن',
+                    height: 50,
+                    fontSize: 15,
+                    bg: AppColors.onAccent,
+                    fg: const Color(0xFFFFFFFF),
+                    onTap: () => s.openDoctors(),
+                  ),
+                ],
               ),
             ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// بانر العرض (يفتح صفحة الخدمة نفسها)
+class _OfferBanner extends StatelessWidget {
+  const _OfferBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final sv = offerService;
+    void open() => Navigator.of(context).push(iosRoute(ServiceScreen(service: sv)));
+    return GestureDetector(
+      onTap: open,
+      child: Container(
+        decoration: BoxDecoration(color: const Color(0xFF000000), borderRadius: BorderRadius.circular(42)),
+        padding: const EdgeInsets.fromLTRB(24, 26, 22, 22),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0x29E3FF3A), borderRadius: BorderRadius.circular(999)),
+                    child: Text('عرض لفترة محدودة', style: ts(13, weight: FontWeight.w600, color: AppColors.lime)),
+                  ),
+                  const SizedBox(height: 10),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text('خصم ${ar(sv.discount)}%', style: ts(40, weight: FontWeight.w600, height: 1.1, color: AppColors.lime)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(sv.name, style: ts(20, color: const Color(0xFFFFFFFF))),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(sv.oldPriceText, style: ts(14, color: const Color(0xFFAEAEB2), decoration: TextDecoration.lineThrough)),
+                      const SizedBox(width: 8),
+                      Text(sv.priceText, style: ts(14, color: const Color(0xFFE5E5EA))),
+                    ],
+                  ),
+                  const Spacer(),
+                  PillButton(label: 'عرض الخدمة', height: 48, fontSize: 15, onTap: open),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            ServiceImage(service: sv, size: 112),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة خدمة صغيرة (الأكثر طلباً)
+class _MiniServiceCard extends StatefulWidget {
+  const _MiniServiceCard({required this.service});
+
+  final Service service;
+
+  @override
+  State<_MiniServiceCard> createState() => _MiniServiceCardState();
+}
+
+class _MiniServiceCardState extends State<_MiniServiceCard> {
+  bool _added = false;
+
+  void _add() {
+    AppScope.read(context).addToCart(widget.service.id);
+    HapticFeedback.lightImpact();
+    setState(() => _added = true);
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (mounted) setState(() => _added = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sv = widget.service;
+    void open() => Navigator.of(context).push(iosRoute(ServiceScreen(service: sv)));
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: open,
+      child: Container(
+        width: 172,
+        padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(30)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ExcludeSemantics(
+              child: Container(
+                height: 108,
+                width: double.infinity,
+                decoration: BoxDecoration(color: sv.tint, borderRadius: BorderRadius.circular(22)),
+                child: Icon(sv.icon, size: 46, color: const Color(0xFF000000)),
+              ),
+            ),
+            Expanded(
+              child: Semantics(
+                button: true,
+                hint: 'عرض تفاصيل الخدمة',
+                onTap: open,
+                child: MergeSemantics(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 10, 6, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(sv.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: ts(16, weight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        RatingRow(rating: sv.ratingText, reviews: sv.reviews),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  Expanded(child: Text(sv.priceText, style: ts(16, weight: FontWeight.w600))),
+                  Pressable(
+                    onTap: _add,
+                    semanticLabel: _added ? 'انضافت ${sv.name} للسلة' : 'إضافة ${sv.name} إلى السلة',
+                    child: AnimatedContainer(
+                      duration: motion(context, 200),
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: _added ? AppColors.ink : AppColors.lime,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        _added ? Icons.check_rounded : Icons.add_rounded,
+                        size: 24,
+                        color: _added ? AppColors.white : AppColors.onAccent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة طبيب صغيرة (أطباؤنا)
+class _MiniDoctorCard extends StatelessWidget {
+  const _MiniDoctorCard({required this.doctor});
+
+  final Doctor doctor;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = doctor;
+    return Pressable(
+      onTap: () => openBooking(context, d),
+      semanticLabel: '${d.name}، ${d.role}، التقييم ${d.ratingText}',
+      child: Container(
+        width: 152,
+        padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(30)),
+        child: Column(
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+              child: Image.asset(d.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
+            ),
+            const SizedBox(height: 10),
+            Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(15, weight: FontWeight.w600)),
+            Text(d.role, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(13, color: AppColors.body)),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.star_rounded, size: 17, color: starColor),
+                const SizedBox(width: 3),
+                Text(d.ratingText, style: ts(13, weight: FontWeight.w600)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -286,148 +551,5 @@ void _showNotifications(BuildContext context, Booking? next) {
         ),
       const SizedBox(height: 8),
     ],
-  );
-}
-
-String doctorsCount(int n) => switch (n) {
-      0 => 'ما فيه أطباء',
-      1 => 'طبيب واحد',
-      2 => 'طبيبين',
-      _ when n <= 10 => '${ar(n)} أطباء',
-      _ => '${ar(n)} طبيب',
-    };
-
-String servicesCount(int n) => switch (n) {
-      0 => 'ما فيه خدمات',
-      1 => 'خدمة وحدة',
-      2 => 'خدمتين',
-      _ when n <= 10 => '${ar(n)} خدمات',
-      _ => '${ar(n)} خدمة',
-    };
-
-/// شبكة التخصصات (2 × 2): اسم التخصص بخط كبير وتحته عدد الأطباء والخدمات
-class SpecialtiesGrid extends StatelessWidget {
-  const SpecialtiesGrid({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    Widget tile(int i) {
-      final sp = specialties[i];
-      final docs = doctors.where((d) => d.cats.contains(sp.id)).length;
-      final svs = servicesIn(sp.id).length;
-      final lime = i == 0;
-      final fg = lime ? AppColors.onAccent : AppColors.ink;
-      return Expanded(
-        child: Pressable(
-          onTap: () => showSpecialtySheet(context, sp.id, sp.name),
-          semanticLabel: '${sp.name}، ${doctorsCount(docs)}، ${servicesCount(svs)}',
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 128),
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-            decoration: BoxDecoration(
-              color: lime ? AppColors.lime : AppColors.white,
-              borderRadius: BorderRadius.circular(34),
-              border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(sp.name, style: ts(26, height: 1.2, color: fg)),
-                const SizedBox(height: 18),
-                Text(
-                  '${doctorsCount(docs)} · ${servicesCount(svs)}',
-                  style: ts(13, color: lime ? const Color(0xB3000000) : AppColors.body),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        for (var r = 0; r < specialties.length; r += 2) ...[
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                tile(r),
-                const SizedBox(width: 10),
-                if (r + 1 < specialties.length) tile(r + 1) else const Expanded(child: SizedBox()),
-              ],
-            ),
-          ),
-          if (r + 2 < specialties.length) const SizedBox(height: 10),
-        ],
-      ],
-    );
-  }
-}
-
-/// نافذة التخصص: اختيار الأطباء أو الخدمات
-Future<void> showSpecialtySheet(BuildContext context, String id, String name) {
-  final s = AppScope.read(context);
-  final docs = doctors.where((d) => d.cats.contains(id)).length;
-  final svs = servicesIn(id).length;
-
-  Widget option(BuildContext ctx, String title, String sub, bool enabled, VoidCallback go) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Pressable(
-          onTap: enabled
-              ? () {
-                  Navigator.of(ctx).pop();
-                  go();
-                }
-              : null,
-          semanticLabel: '$title، $sub',
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 84),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-            decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(28)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(title, style: ts(21, weight: FontWeight.w600, color: enabled ? AppColors.ink : AppColors.faint)),
-                      const SizedBox(height: 2),
-                      Text(sub, style: ts(14, color: AppColors.body)),
-                    ],
-                  ),
-                ),
-                Icon(CupertinoIcons.forward, size: 20, color: enabled ? AppColors.ink : AppColors.faint),
-              ],
-            ),
-          ),
-        ),
-      );
-
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: AppColors.white,
-    showDragHandle: true,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-    builder: (ctx) => SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Semantics(header: true, child: Text(name, style: ts(30))),
-            const SizedBox(height: 4),
-            Text('وش تبي تشوف؟', style: ts(15, color: AppColors.body)),
-            const SizedBox(height: 16),
-            option(ctx, 'الأطباء', doctorsCount(docs), docs > 0, () => s.openDoctors(id)),
-            option(ctx, 'الخدمات', servicesCount(svs), svs > 0, () => s.openServices(id)),
-          ],
-        ),
-      ),
-    ),
   );
 }

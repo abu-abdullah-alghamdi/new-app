@@ -107,6 +107,10 @@ class _ServiceScreenState extends State<ServiceScreen> {
                               child: ExcludeSemantics(child: RatingRow(rating: sv.ratingText, reviews: sv.reviews)),
                             ),
                             const Spacer(),
+                            if (sv.onOffer) ...[
+                              Text(sv.oldPriceText, style: ts(16, color: AppColors.faint, decoration: TextDecoration.lineThrough)),
+                              const SizedBox(width: 8),
+                            ],
                             Text(sv.priceText, style: ts(26, weight: FontWeight.w600)),
                           ],
                         ),
@@ -221,7 +225,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: PillButton(
-                      label: _added ? 'تمت الإضافة' : 'أضف إلى السلة · ${money(sv.price * _qty)}',
+                      label: _added ? 'تمت الإضافة' : 'أضف إلى السلة · ${money(sv.finalPrice * _qty)}',
                       icon: _added ? Icons.check_rounded : CupertinoIcons.bag_badge_plus,
                       height: 60,
                       fontSize: 16,

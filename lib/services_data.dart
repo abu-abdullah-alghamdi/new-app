@@ -6,16 +6,29 @@ import 'package:flutter/material.dart';
 import 'data.dart';
 
 class Branch {
-  const Branch(this.id, this.name);
+  const Branch(this.id, this.name, {this.area = '', this.phone = '', this.lat = 0, this.lng = 0});
 
   final String id;
   final String name;
+  final String area;
+  final String phone;
+  final double lat;
+  final double lng;
+
+  /// أيام العمل: السبت إلى الخميس، من 4 العصر إلى 8 المساء (الجمعة مغلق)
+  static const hoursText = 'السبت – الخميس · 4:00 م – 8:00 م';
+
+  bool openAt(DateTime t) => t.weekday != DateTime.friday && t.hour >= 16 && t.hour < 20;
+
+  /// رابط الاتجاهات في خرائط آبل
+  Uri get mapsUri => Uri.parse('https://maps.apple.com/?daddr=$lat,$lng&q=${Uri.encodeComponent(name)}');
 }
 
+// فروع تجريبية (العناوين والأرقام والمواقع تُستبدل بالحقيقية قبل النشر)
 const branches = [
-  Branch('rawdah', 'فرع الروضة'),
-  Branch('salamah', 'فرع السلامة'),
-  Branch('hamdaniyah', 'فرع الحمدانية'),
+  Branch('rawdah', 'فرع الروضة', area: 'جدة، حي الروضة', phone: '+966000000001', lat: 21.5636, lng: 39.1607),
+  Branch('salamah', 'فرع السلامة', area: 'جدة، حي السلامة', phone: '+966000000002', lat: 21.5915, lng: 39.1488),
+  Branch('hamdaniyah', 'فرع الحمدانية', area: 'جدة، حي الحمدانية', phone: '+966000000003', lat: 21.7569, lng: 39.1913),
 ];
 
 Branch branchById(String id) => branches.firstWhere((b) => b.id == id, orElse: () => branches.first);
@@ -30,7 +43,15 @@ class Service {
     required this.icon,
     required this.tint,
     this.branchIds,
+    this.discount = 0,
   });
+
+  /// نسبة الخصم (0 = بدون عرض)
+  final int discount;
+
+  int get finalPrice => (price * (100 - discount) / 100).round();
+  bool get onOffer => discount > 0;
+  String get oldPriceText => '${ar(price)} ريال';
 
   final String id;
   final String name;
@@ -54,7 +75,7 @@ class Service {
       ? 'متوفرة في جميع الفروع'
       : 'متوفرة في: ${availableIn.map((id) => branchById(id).name).join('، ')}';
 
-  String get priceText => '${ar(price)} ريال';
+  String get priceText => '${ar(finalPrice)} ريال';
   String get ratingText => rating.toStringAsFixed(1);
 }
 
@@ -100,6 +121,7 @@ const services = [
     reviews: 210,
     icon: Icons.fact_check_rounded,
     tint: _peach,
+    discount: 30,
   ),
   Service(
     id: 's5',
@@ -270,3 +292,9 @@ extension ServiceDetails on Service {
 }
 
 List<Service> servicesIn(String? cat) => cat == null ? services : services.where((x) => x.cat == cat).toList();
+
+/// الخدمة اللي عليها العرض في الصفحة الرئيسية
+Service get offerService => services.firstWhere((x) => x.onOffer, orElse: () => services.first);
+
+/// الأكثر طلباً: أكثر الخدمات تقييمات
+List<Service> get popularServices => ([...services]..sort((a, b) => b.reviews.compareTo(a.reviews))).take(4).toList();

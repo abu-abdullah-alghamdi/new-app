@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../data.dart';
 import '../main.dart';
+import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -205,6 +206,25 @@ class AccountTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          // فروعنا: مربع واضح، وكل فرع في مربع لحاله
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 22, 16, 16),
+            decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(40)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                  child: Semantics(header: true, child: Text('فروعنا', style: ts(22, weight: FontWeight.w500))),
+                ),
+                for (final b in branches) ...[
+                  _BranchBox(branch: b, onOpen: (uri) => _open(context, uri)),
+                  if (b != branches.last) const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           if (s.loggedIn)
             PillButton(
               label: 'تسجيل الخروج',
@@ -239,3 +259,87 @@ class AccountTab extends StatelessWidget {
     );
   }
 }
+
+/// مربع فرع: الاسم، مفتوح/مغلق، الأيام والساعات، الحي، وزرين (اتصال · الاتجاهات)
+class _BranchBox extends StatelessWidget {
+  const _BranchBox({required this.branch, required this.onOpen});
+
+  final Branch branch;
+  final void Function(Uri uri) onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = branch;
+    final open = b.openAt(DateTime.now());
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(28),
+        border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MergeSemantics(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: Text(b.name, style: ts(19, weight: FontWeight.w600))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: open ? AppColors.green.withAlpha(26) : AppColors.closed,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        open ? 'مفتوح الآن' : 'مغلق الآن',
+                        style: ts(13, weight: FontWeight.w600, color: open ? AppColors.green : AppColors.closedText),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(Branch.hoursText, style: ts(14, color: AppColors.body)),
+                const SizedBox(height: 2),
+                Text(b.area, style: ts(13, color: AppColors.faint)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: PillButton(
+                  label: 'اتصال',
+                  icon: CupertinoIcons.phone_fill,
+                  height: 48,
+                  fontSize: 15,
+                  padding: 12,
+                  bg: AppColors.white,
+                  onTap: () => onOpen(Uri.parse('tel:${b.phone}')),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: PillButton(
+                  label: 'الاتجاهات',
+                  icon: CupertinoIcons.location_fill,
+                  height: 48,
+                  fontSize: 15,
+                  padding: 12,
+                  bg: AppColors.ink,
+                  fg: AppColors.white,
+                  onTap: () => onOpen(b.mapsUri),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+

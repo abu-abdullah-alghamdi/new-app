@@ -268,7 +268,17 @@ class _ServiceCardState extends State<ServiceCard> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Expanded(child: Text(sv.priceText, style: ts(19, weight: FontWeight.w600))),
+                    Expanded(
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        children: [
+                          Text(sv.priceText, style: ts(19, weight: FontWeight.w600)),
+                          if (sv.onOffer)
+                            Text(sv.oldPriceText, style: ts(13, color: AppColors.faint, decoration: TextDecoration.lineThrough)),
+                        ],
+                      ),
+                    ),
                     // زر الإضافة للسلة: مربع فيه + (يتحول لعلامة صح لحظة بعد الإضافة)
                     Pressable(
                       onTap: _add,

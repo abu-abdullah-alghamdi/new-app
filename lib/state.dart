@@ -34,7 +34,7 @@ class OrderItem {
   final Service service;
   final int qty;
 
-  int get total => service.price * qty;
+  int get total => service.finalPrice * qty;
 }
 
 /// طلب خدمات مدفوع (أو الدفع في العيادة)
