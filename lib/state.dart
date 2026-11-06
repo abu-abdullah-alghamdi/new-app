@@ -65,6 +65,15 @@ class Order {
 
 /// حالة التطبيق العامة
 class AppState extends ChangeNotifier {
+  /// يزيد مع كل تغيير (نستخدمه عشان التبويب الظاهر بس يعيد رسم نفسه)
+  int version = 0;
+
+  @override
+  void notifyListeners() {
+    version++;
+    super.notifyListeners();
+  }
+
   AppState() {
     var up = 3;
     if (DayInfo(up).closed) up = 4;
@@ -303,9 +312,27 @@ class AppState extends ChangeNotifier {
 class AppScope extends InheritedNotifier<AppState> {
   const AppScope({super.key, required AppState state, required super.child}) : super(notifier: state);
 
-  static AppState of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
+  /// يرجّع الحالة ويعيد رسم الويدجت لما تتغير.
+  /// داخل التبويبات: يعيد الرسم بس إذا التبويب ظاهر (شوف [TabScope]).
+  static AppState of(BuildContext context) {
+    final tab = context.dependOnInheritedWidgetOfExactType<TabScope>();
+    if (tab != null) return tab.state;
+    return context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
+  }
 
   static AppState read(BuildContext context) =>
       context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
+}
+
+/// يغلّف كل تبويب في الشريط العائم: التبويبات المخفية ما تعيد رسم نفسها مع كل تغيير،
+/// وأول ما يظهر التبويب يتحدث بآخر البيانات.
+class TabScope extends InheritedWidget {
+  const TabScope({super.key, required this.state, required this.active, required this.version, required super.child});
+
+  final AppState state;
+  final bool active;
+  final int version;
+
+  @override
+  bool updateShouldNotify(TabScope oldWidget) => active && (version != oldWidget.version || !oldWidget.active);
 }

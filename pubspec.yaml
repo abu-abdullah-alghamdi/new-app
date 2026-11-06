@@ -12,7 +12,6 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
   url_launcher: ^6.3.1
   shared_preferences: ^2.3.2
 
@@ -25,3 +24,16 @@ flutter:
   uses-material-design: true
   assets:
     - assets/doctors/
+
+  # الخط مدمج داخل التطبيق (ما ينزل من الإنترنت)
+  fonts:
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700

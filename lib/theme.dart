@@ -44,7 +44,7 @@ class AppColors {
 }
 
 List<BoxShadow> get cardShadow => [
-      BoxShadow(color: AppColors.softShadow, blurRadius: 24, offset: const Offset(0, 8)),
+      BoxShadow(color: AppColors.softShadow, blurRadius: 16, offset: const Offset(0, 6)),
     ];
 
 List<BoxShadow> get pillShadow => [

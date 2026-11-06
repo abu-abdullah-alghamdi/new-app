@@ -27,7 +27,16 @@ class MainShell extends StatelessWidget {
           Positioned.fill(
             child: IndexedStack(
               index: s.tab,
-              children: const [HomeTab(), AppointmentsTab(), DoctorsTab(), AccountTab(), ServicesTab()],
+              children: [
+                // كل تبويب يعيد رسم نفسه بس وهو ظاهر، والمخفي توقف حركاته
+                for (final (i, tab) in const <Widget>[HomeTab(), AppointmentsTab(), DoctorsTab(), AccountTab(), ServicesTab()].indexed)
+                  TabScope(
+                    state: s,
+                    active: s.tab == i,
+                    version: s.version,
+                    child: TickerMode(enabled: s.tab == i, child: RepaintBoundary(child: tab)),
+                  ),
+              ],
             ),
           ),
           // تلاشي المحتوى تحت شريط الحالة وتحت الشريط العائم (scroll edge effect)
@@ -122,11 +131,11 @@ class _Glass extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: radius,
-        boxShadow: const [BoxShadow(color: Color(0x29000000), blurRadius: 32, offset: Offset(0, 12))],
+        boxShadow: const [BoxShadow(color: Color(0x29000000), blurRadius: 20, offset: Offset(0, 10))],
       ),
       child: ClipRRect(
         borderRadius: radius,
-        child: solid ? box : BackdropFilter(filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26), child: box),
+        child: solid ? box : BackdropFilter(filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18), child: RepaintBoundary(child: box)),
       ),
     );
   }

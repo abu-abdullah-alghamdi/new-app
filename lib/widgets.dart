@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'data.dart';
 import 'theme.dart';
@@ -18,6 +17,9 @@ class WesternDigits extends TextInputFormatter {
   }
 }
 
+/// اسم الخط المدمج في التطبيق (pubspec.yaml ← fonts)
+const appFont = 'IBMPlexSansArabic';
+
 /// نمط الخط الموحد للتطبيق (IBM Plex Sans Arabic)
 TextStyle ts(
   double size, {
@@ -27,7 +29,8 @@ TextStyle ts(
   TextDecoration? decoration,
 }) {
   final c = color ?? AppColors.ink;
-  return GoogleFonts.ibmPlexSansArabic(
+  return TextStyle(
+    fontFamily: appFont,
     fontSize: size,
     fontWeight: weight,
     color: c,

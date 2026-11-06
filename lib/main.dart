@@ -2,13 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/onboarding_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'state.dart';
 import 'theme.dart';
+import 'widgets.dart';
 
 final appState = AppState();
 
@@ -26,6 +26,7 @@ Future<void> main() async {
 ThemeData _theme(Brightness b) {
   final base = ThemeData(
     useMaterial3: true,
+    fontFamily: appFont,
     brightness: b,
     scaffoldBackgroundColor: b == Brightness.dark ? const Color(0xFF0B0B0C) : const Color(0xFFEEEEF0),
     colorScheme: ColorScheme.fromSeed(seedColor: AppColors.lime, brightness: b),
@@ -38,7 +39,7 @@ ThemeData _theme(Brightness b) {
   );
   final text = b == Brightness.dark ? Colors.white : Colors.black;
   return base.copyWith(
-    textTheme: GoogleFonts.ibmPlexSansArabicTextTheme(base.textTheme).apply(bodyColor: text, displayColor: text),
+    textTheme: base.textTheme.apply(fontFamily: appFont, bodyColor: text, displayColor: text),
   );
 }
 
