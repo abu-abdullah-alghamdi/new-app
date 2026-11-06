@@ -128,9 +128,11 @@ pull_latest() {
   git pull --ff-only
 }
 
+# فيه تحديث جديد بس إذا GitHub عنده commits مو موجودة عندك
+# (لو نسختك متقدمة على GitHub ما يعتبرها تحديث، وما يعيد التشغيل)
 is_behind() {
-  git fetch --quiet
-  [[ "$(git rev-parse HEAD)" != "$(git rev-parse '@{u}')" ]]
+  git fetch --quiet 2>/dev/null || return 1
+  [[ "$(git rev-list --count HEAD..'@{u}')" -gt 0 ]]
 }
 
 cmd_run()    { check_tools; prepare; xcode_run; }
