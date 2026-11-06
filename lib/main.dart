@@ -3,16 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'screens/onboarding_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'state.dart';
 import 'theme.dart';
 
 final appState = AppState();
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AreemApp());
+  // الصفحات التعريفية تطلع أول مرة بس
+  var seen = false;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    seen = prefs.getBool(onboardingSeenKey) ?? false;
+  } catch (_) {}
+  runApp(AreemApp(showOnboarding: !seen));
 }
 
 ThemeData _theme(Brightness b) {
@@ -45,7 +53,9 @@ void _rebuildAll(BuildContext context) {
 }
 
 class AreemApp extends StatelessWidget {
-  const AreemApp({super.key});
+  const AreemApp({super.key, this.showOnboarding = false});
+
+  final bool showOnboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +87,7 @@ class AreemApp extends StatelessWidget {
             child: child!,
           );
         },
-        home: const WelcomeScreen(),
+        home: showOnboarding ? const OnboardingScreen() : const WelcomeScreen(),
       ),
     );
   }
