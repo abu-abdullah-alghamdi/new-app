@@ -43,16 +43,6 @@ ThemeData _theme(Brightness b) {
   );
 }
 
-/// يعيد بناء كل الشاشات لما يتغير الوضع الفاتح/الداكن (بدون ما تضيع الحالة)
-void _rebuildAll(BuildContext context) {
-  void rebuild(Element el) {
-    el.markNeedsBuild();
-    el.visitChildren(rebuild);
-  }
-
-  (context as Element).visitChildren(rebuild);
-}
-
 class AreemApp extends StatelessWidget {
   const AreemApp({super.key, this.showOnboarding = false});
 
@@ -72,20 +62,17 @@ class AreemApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
+        // التطبيق فاتح دايماً (الوضع الداكن متوقف؛ ألوانه باقية في theme.dart لو احتجناها)
         theme: _theme(Brightness.light),
-        darkTheme: _theme(Brightness.dark),
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.light,
         builder: (context, child) {
-          final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
-          if (AppColors.dark != dark) {
-            AppColors.dark = dark;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (context.mounted) _rebuildAll(context);
-            });
-          }
+          AppColors.dark = false;
           return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-            child: child!,
+            value: SystemUiOverlayStyle.dark,
+            child: MediaQuery(
+              data: MediaQuery.of(context).copyWith(platformBrightness: Brightness.light),
+              child: child!,
+            ),
           );
         },
         home: showOnboarding ? const OnboardingScreen() : const WelcomeScreen(),

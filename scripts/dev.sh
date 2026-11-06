@@ -41,6 +41,9 @@ ensure_ios() {
     /usr/libexec/PlistBuddy -c "Delete :CFBundleLocalizations" "$plist" 2>/dev/null || true
     /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" "$plist"
     /usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations:0 string ar" "$plist"
+    # التطبيق فاتح دايماً (حتى لو الجوال على الوضع الداكن)
+    /usr/libexec/PlistBuddy -c "Set :UIUserInterfaceStyle Light" "$plist" 2>/dev/null \
+      || /usr/libexec/PlistBuddy -c "Add :UIUserInterfaceStyle string Light" "$plist"
   fi
 }
 

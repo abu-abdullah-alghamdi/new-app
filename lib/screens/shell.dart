@@ -156,27 +156,29 @@ class GlassNavBar extends StatelessWidget {
           onTap: () => i == 2 ? s.openDoctors() : s.setTab(i),
           semanticLabel: i == 4 && s.cartCount > 0 ? '$label، في السلة ${ar(s.cartCount)}' : label,
           selected: active,
-          child: AnimatedContainer(
-            duration: motion(context, 250),
-            curve: Curves.easeOut,
+          // الخلفية البيضاء للتبويب المختار صارت كبسولة وحدة تنزلق (تحت)، هنا الأيقونة والاسم بس
+          child: SizedBox(
             height: 56,
-            decoration: BoxDecoration(
-              color: active ? AppColors.glassActive : Colors.transparent,
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: active ? const [BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 2))] : null,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                icon(c, active),
-                const SizedBox(height: 2),
-                Text(label, maxLines: 1, style: ts(11, weight: FontWeight.w600, color: c)),
-              ],
+            child: TweenAnimationBuilder<Color?>(
+              tween: ColorTween(end: c),
+              duration: motion(context, 220),
+              builder: (context, col, _) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  icon(col ?? c, active),
+                  const SizedBox(height: 2),
+                  Text(label, maxLines: 1, style: ts(11, weight: FontWeight.w600, color: col ?? c)),
+                ],
+              ),
             ),
           ),
         ),
       );
     }
+
+    // ترتيب التبويبات في الشريط (من اليمين) ومكان الكبسولة المنزلقة
+    const order = [0, 2, 4, 1, 3];
+    final slot = order.indexOf(s.tab).clamp(0, order.length - 1).toDouble();
 
     // أسماء الشريط ما تكبر مع تكبير الخط (مثل شريط آبل)، وتبقى 11 كحد أدنى
     // كل الأزرار داخل كبسولة زجاجية وحدة (من اليمين): الرئيسية، الأطباء، الخدمات، مواعيدي، حسابي
@@ -187,7 +189,22 @@ class GlassNavBar extends StatelessWidget {
           radius: BorderRadius.circular(999),
           child: Padding(
             padding: const EdgeInsets.all(4),
-            child: Row(
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final w = box.maxWidth / order.length;
+                return Stack(
+                  children: [
+                    // الكبسولة البيضاء: تنزلق من التبويب القديم للجديد (فورية مع "تقليل الحركة")
+                    AnimatedPositionedDirectional(
+                      duration: motion(context, 320),
+                      curve: Curves.easeOutCubic,
+                      start: slot * w,
+                      top: 0,
+                      bottom: 0,
+                      width: w,
+                      child: const _ActivePill(),
+                    ),
+                    Row(
               children: [
                 tab(0, 'الرئيسية', (c, a) => Icon(a ? Icons.home_rounded : Icons.home_outlined, size: 23, color: c)),
                 tab(2, 'الأطباء', (c, a) => Icon(a ? Icons.medical_services_rounded : Icons.medical_services_outlined, size: 23, color: c)),
@@ -221,10 +238,29 @@ class GlassNavBar extends StatelessWidget {
                       child: Text(s.initial, style: ts(12, weight: FontWeight.w700, color: AppColors.onAccent)),
                     )),
               ],
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// الكبسولة البيضاء خلف التبويب المختار
+class _ActivePill extends StatelessWidget {
+  const _ActivePill();
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.glassActive,
+          borderRadius: BorderRadius.circular(999),
+          border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
+          boxShadow: const [BoxShadow(color: Color(0x1F000000), blurRadius: 8, offset: Offset(0, 2))],
+        ),
+      );
 }
