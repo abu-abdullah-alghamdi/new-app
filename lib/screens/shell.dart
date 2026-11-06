@@ -66,6 +66,31 @@ class MainShell extends StatelessWidget {
               ),
             ),
           ),
+          // شريط "عرض السلة" فوق الشريط العائم في صفحة الخدمات (يطلع بعد أول إضافة)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 86),
+                child: AnimatedSwitcher(
+                  duration: motion(context, 250),
+                  transitionBuilder: (child, a) => FadeTransition(
+                    opacity: a,
+                    child: SlideTransition(
+                      position: Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(a),
+                      child: child,
+                    ),
+                  ),
+                  child: s.tab == 4 && s.cartCount > 0
+                      ? CartBar(key: const ValueKey('cart-bar'), count: s.cartCount, subtotal: s.cartSubtotal)
+                      : const SizedBox(key: ValueKey('no-bar'), width: double.infinity),
+                ),
+              ),
+            ),
+          ),
           const Positioned(left: 16, right: 16, bottom: 0, child: SafeArea(top: false, child: GlassNavBar())),
         ],
       ),

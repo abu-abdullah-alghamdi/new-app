@@ -13,6 +13,52 @@ import 'shell.dart';
 
 const starColor = Color(0xFFFFB800);
 
+/// المسافة اللي ياخذها شريط "عرض السلة" فوق الشريط العائم
+const cartBarSpace = 74.0;
+
+/// شريط "عرض السلة": عدد العناصر في مربع، وكلمة عرض السلة، والمجموع
+class CartBar extends StatelessWidget {
+  const CartBar({super.key, required this.count, required this.subtotal});
+
+  final int count;
+  final int subtotal;
+
+  @override
+  Widget build(BuildContext context) {
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: Pressable(
+        onTap: () => Navigator.of(context).push(iosRoute(const CartScreen())),
+        semanticLabel: 'عرض السلة، ${ar(count)} عناصر، المجموع ${money(subtotal)}',
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 62),
+          padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 22, 10),
+          decoration: BoxDecoration(
+            color: AppColors.ink,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 10))],
+          ),
+          child: Row(
+            children: [
+              Container(
+                constraints: const BoxConstraints(minWidth: 42),
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(14)),
+                child: Text(ar(count), style: ts(18, weight: FontWeight.w700, color: AppColors.onAccent)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text('عرض السلة', style: ts(17, weight: FontWeight.w600, color: AppColors.white))),
+              Text(money(subtotal), style: ts(17, weight: FontWeight.w600, color: AppColors.white)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// صفحة الخدمات: قائمة الخدمات وزر السلة
 class ServicesTab extends StatelessWidget {
   const ServicesTab({super.key});
@@ -25,7 +71,8 @@ class ServicesTab extends StatelessWidget {
       top: false,
       bottom: false,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 30, 14, navBottomSpace),
+        // لما يطلع شريط "عرض السلة" نزيد المسافة تحت عشان ما يغطي آخر خدمة
+        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 30, 14, navBottomSpace + (s.cartCount > 0 ? cartBarSpace : 0)),
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
