@@ -140,13 +140,7 @@ class _DoctorFavCard extends StatelessWidget {
         child: Row(
           children: [
             ExcludeSemantics(
-              child: Container(
-                width: 84,
-                height: 84,
-                clipBehavior: Clip.antiAlias,
-                decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-                child: Image.asset(d.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
-              ),
+              child: DoctorAvatar(doctor: d, size: 84),
             ),
             const SizedBox(width: 14),
             Expanded(

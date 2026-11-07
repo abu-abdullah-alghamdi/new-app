@@ -7,10 +7,10 @@ const _arDigits = '٠١٢٣٤٥٦٧٨٩';
 const clinicPhone = '+966000000000';
 
 /// تنسيق الأرقام للعرض (التطبيق يعرض الأرقام بالإنجليزي: 0123456789)
-String ar(Object value) => value.toString();
+String fmtNum(Object value) => value.toString();
 
 /// يحوّل أي أرقام عربية يكتبها المستخدم (٠١٢…) إلى إنجليزية
-String en(String value) => value.replaceAllMapped(
+String normalizeDigits(String value) => value.replaceAllMapped(
       RegExp('[٠-٩]'),
       (m) => _arDigits.indexOf(m[0]!).toString(),
     );
@@ -51,10 +51,9 @@ class DayInfo {
               ? 'أمس'
               : _dayLong[date.weekday]!;
   String get short => offset == 0 ? 'اليوم' : _dayShort[date.weekday]!;
-  String get dayNum => ar(date.day);
+  String get dayNum => fmtNum(date.day);
   String get month => monthNames[date.month - 1];
-  String get full => '$label ${ar(date.day)} $month';
-  String get longDate => '${ar(date.day)} $month ${ar(date.year)}';
+  String get full => '$label ${fmtNum(date.day)} $month';
 }
 
 /// الوقت بالدقائق بعد الساعة 4:00 مساءً
@@ -63,7 +62,7 @@ String fmtTime(int minutesAfter4pm) {
   var h = (total ~/ 60) % 12;
   if (h == 0) h = 12;
   final mm = (total % 60).toString().padLeft(2, '0');
-  return '${ar(h)}:${ar(mm)} م';
+  return '${fmtNum(h)}:${fmtNum(mm)} م';
 }
 
 String fmtRange(int start, int duration) => 'من ${fmtTime(start)} إلى ${fmtTime(start + duration)}';
@@ -76,14 +75,6 @@ const categories = {
   'derma': 'استشارة جلدية',
   'laser': 'جلسة ليزر',
 };
-
-/// التخصصات اللي تطلع في الصفحة الرئيسية
-const List<({String id, String name})> specialties = [
-  (id: 'dental', name: 'الأسنان'),
-  (id: 'ortho', name: 'التقويم'),
-  (id: 'derma', name: 'الجلدية'),
-  (id: 'laser', name: 'الليزر'),
-];
 
 const List<({String? id, String label})> categoryFilters = [
   (id: null, label: 'الكل'),
@@ -133,11 +124,10 @@ class Doctor {
   String get ratingText => rating.toStringAsFixed(1);
 
   String get name => '$n1 $n2';
-  String get durationText => '${ar(duration)} دقيقة';
+  String get durationText => '${fmtNum(duration)} دقيقة';
   bool get reallyToday => availableToday && !DayInfo(0).closed;
   String get availText => reallyToday ? 'متاح اليوم' : 'متاح غداً';
   int get nextDay => firstOpenDay(fromToday: reallyToday);
-  String get nextFull => 'أقرب موعد: ${DayInfo(nextDay).longDate}';
 }
 
 int firstOpenDay({bool fromToday = true}) {

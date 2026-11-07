@@ -6,7 +6,6 @@ import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'cart_screen.dart';
 import 'done_screen.dart';
 import 'login_gate.dart';
 import 'payment_screen.dart';
@@ -111,15 +110,11 @@ class ConfirmScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: PillButton(
-                  label: items.isNotEmpty ? 'متابعة للدفع' : 'تأكيد الحجز',
-                  height: 66,
-                  onTap: () => _confirm(context),
-                ),
+            BottomAction(
+              child: PillButton(
+                label: items.isNotEmpty ? 'متابعة للدفع' : 'تأكيد الحجز',
+                height: 66,
+                onTap: () => _confirm(context),
               ),
             ),
           ],

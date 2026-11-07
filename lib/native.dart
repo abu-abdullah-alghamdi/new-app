@@ -38,7 +38,7 @@ Future<void> shareText(BuildContext context, String text) async {
 String shareDoctorText(Doctor d) => '${d.name} · ${d.role}\nاحجز موعدك من تطبيق عيادتي\n$appShareLink';
 
 String shareServiceText(Service s) {
-  final offer = s.onOffer ? ' (خصم ${ar(s.discount)}%)' : '';
+  final offer = s.onOffer ? ' (خصم ${fmtNum(s.discount)}%)' : '';
   return '${s.name}$offer · ${s.priceText}\n${s.availabilityText}\nاحجزها من تطبيق عيادتي\n$appShareLink';
 }
 

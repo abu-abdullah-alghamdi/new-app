@@ -32,7 +32,7 @@ class CartBar extends StatelessWidget {
       maxScaleFactor: 1.6,
       child: Pressable(
         onTap: () => Navigator.of(context).push(iosRoute(const CartScreen())),
-        semanticLabel: 'عرض السلة، ${ar(count)} عناصر، المجموع ${money(subtotal)}',
+        semanticLabel: 'عرض السلة، ${fmtNum(count)} عناصر، المجموع ${money(subtotal)}',
         child: Container(
           constraints: const BoxConstraints(minHeight: 62),
           padding: const EdgeInsetsDirectional.fromSTEB(10, 10, 22, 10),
@@ -49,7 +49,7 @@ class CartBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(14)),
-                child: Text(ar(count), style: ts(18, weight: FontWeight.w700, color: AppColors.onAccent)),
+                child: Text(fmtNum(count), style: ts(18, weight: FontWeight.w700, color: AppColors.onAccent)),
               ),
               const SizedBox(width: 12),
               Expanded(child: Text('عرض السلة', style: ts(17, weight: FontWeight.w600, color: AppColors.white))),
@@ -69,9 +69,8 @@ class ServicesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
     final list = servicesIn(s.serviceCatFilter);
-    Widget px(Widget w) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: w);
+    // العنوان الكبير يتعامل مع الساعة فوق، والـ SafeArea للأطراف بس
     return SafeArea(
       top: false,
       bottom: false,
@@ -119,6 +118,7 @@ class ServicesTab extends StatelessWidget {
   }
 }
 
+/// زر السلة مع عدد العناصر
 class CartButton extends StatelessWidget {
   const CartButton({super.key, required this.count, this.size = 58});
 
@@ -129,7 +129,7 @@ class CartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Pressable(
       onTap: () => Navigator.of(context).push(iosRoute(const CartScreen())),
-      semanticLabel: count == 0 ? 'السلة، فاضية' : 'السلة، ${ar(count)} عناصر',
+      semanticLabel: count == 0 ? 'السلة، فاضية' : 'السلة، ${fmtNum(count)} عناصر',
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -152,7 +152,7 @@ class CartButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: AppColors.bg, width: 2),
                 ),
-                child: Text(ar(count), style: ts(12, weight: FontWeight.w700, color: AppColors.white)),
+                child: Text(fmtNum(count), style: ts(12, weight: FontWeight.w700, color: AppColors.white)),
               ),
             ),
         ],
@@ -176,7 +176,7 @@ class RatingRow extends StatelessWidget {
           const SizedBox(width: 3),
           Text(rating, style: ts(14, weight: FontWeight.w600)),
           const SizedBox(width: 4),
-          Flexible(child: Text('(${ar(reviews)} تقييم)', style: ts(13, color: AppColors.body))),
+          Flexible(child: Text('(${fmtNum(reviews)} تقييم)', style: ts(13, color: AppColors.body))),
         ],
       );
 }
@@ -191,16 +191,10 @@ class ServiceCard extends StatefulWidget {
   State<ServiceCard> createState() => _ServiceCardState();
 }
 
-class _ServiceCardState extends State<ServiceCard> {
-  bool _added = false;
-
+class _ServiceCardState extends State<ServiceCard> with AddedFlash {
   void _add() {
     AppScope.read(context).addToCart(widget.service.id);
-    HapticFeedback.lightImpact();
-    setState(() => _added = true);
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) setState(() => _added = false);
-    });
+    flashAdded(const Duration(milliseconds: 900));
   }
 
   @override
@@ -258,7 +252,7 @@ class _ServiceCardState extends State<ServiceCard> {
                       ),
                       const SizedBox(height: 6),
                       Semantics(
-                        label: 'التقييم ${sv.ratingText} من 5، ${ar(sv.reviews)} تقييم',
+                        label: 'التقييم ${sv.ratingText} من 5، ${fmtNum(sv.reviews)} تقييم',
                         child: ExcludeSemantics(child: RatingRow(rating: sv.ratingText, reviews: sv.reviews)),
                       ),
                     ],
@@ -293,22 +287,22 @@ class _ServiceCardState extends State<ServiceCard> {
                     // زر الإضافة للسلة: مربع فيه + (يتحول لعلامة صح لحظة بعد الإضافة)
                     Pressable(
                       onTap: _add,
-                      semanticLabel: _added ? 'انضافت ${sv.name} للسلة' : 'إضافة ${sv.name} إلى السلة',
+                      semanticLabel: added ? 'انضافت ${sv.name} للسلة' : 'إضافة ${sv.name} إلى السلة',
                       child: AnimatedContainer(
                         duration: motion(context, 200),
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: _added ? AppColors.ink : AppColors.lime,
+                          color: added ? AppColors.ink : AppColors.lime,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: AnimatedSwitcher(
                           duration: motion(context, 180),
                           child: Icon(
-                            _added ? Icons.check_rounded : Icons.add_rounded,
-                            key: ValueKey(_added),
+                            added ? Icons.check_rounded : Icons.add_rounded,
+                            key: ValueKey(added),
                             size: 28,
-                            color: _added ? AppColors.white : AppColors.onAccent,
+                            color: added ? AppColors.white : AppColors.onAccent,
                           ),
                         ),
                       ),

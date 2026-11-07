@@ -8,7 +8,6 @@ import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'booking_screen.dart';
-import 'cart_screen.dart';
 import 'confirm_screen.dart';
 import 'services_tab.dart';
 
@@ -68,9 +67,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     )));
   }
 
-  Widget _px(Widget child) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: child);
-
-  Widget _title(String text) => _px(Padding(
+  Widget _title(String text) => px(Padding(
         padding: const EdgeInsets.fromLTRB(6, 20, 6, 10),
         child: Semantics(header: true, child: Text(text, style: ts(20, weight: FontWeight.w500))),
       ));
@@ -91,16 +88,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 18, 0, 20),
                 children: [
-                  _px(Row(
-                    children: [
-                      const BackCircle(close: true),
-                      Expanded(child: Text('حجز الخدمة', textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w500))),
-                      const SizedBox(width: 58),
-                    ],
-                  )),
+                  px(const ScreenHeader(title: 'حجز الخدمة', close: true)),
                   const SizedBox(height: 14),
                   // ملخص الخدمات
-                  _px(Container(
+                  px(Container(
                     padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
                     decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(30)),
                     child: Column(
@@ -114,7 +105,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    '${it.service.name}${it.qty > 1 ? ' × ${ar(it.qty)}' : ''}',
+                                    '${it.service.name}${it.qty > 1 ? ' × ${fmtNum(it.qty)}' : ''}',
                                     style: ts(16, weight: FontWeight.w600),
                                   ),
                                 ),
@@ -130,7 +121,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     ),
                   )),
                   if (avail.isEmpty)
-                    _px(Container(
+                    px(Container(
                       margin: const EdgeInsets.only(top: 14),
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(26)),
@@ -141,7 +132,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     ))
                   else ...[
                     _title('الفرع'),
-                    _px(Wrap(
+                    px(Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
@@ -151,7 +142,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     )),
                     _title('الطبيب'),
                     for (final d in docs)
-                      _px(Padding(
+                      px(Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: _DoctorChoice(
                           doctor: d,
@@ -163,28 +154,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         ),
                       )),
                     _title('اليوم'),
-                    HScroll(
-                      height: 106,
-                      children: [
-                        for (var i = 0; i < 14; i++)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: DayPill(
-                              top: DayInfo(i).dayNum,
-                              bottom: DayInfo(i).closed ? 'مغلق' : DayInfo(i).short,
-                              semanticLabel: DayInfo(i).full,
-                              closed: DayInfo(i).closed,
-                              selected: _day == i,
-                              onTap: () => setState(() {
-                                _day = i;
-                                _time = null;
-                              }),
-                            ),
-                          ),
-                      ],
-                    ),
+                    DayStrip(
+                    selected: _day,
+                    onSelect: (i) => setState(() {
+                      _day = i;
+                      _time = null;
+                    }),
+                  ),
                     _title('الوقت'),
-                    _px(Wrap(
+                    px(Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
@@ -201,18 +179,14 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: PillButton(
-                  label: label,
-                  icon: CupertinoIcons.calendar,
-                  height: 66,
-                  fontSize: 17,
-                  enabled: ready,
-                  onTap: _continue,
-                ),
+            BottomAction(
+              child: PillButton(
+                label: label,
+                icon: CupertinoIcons.calendar,
+                height: 66,
+                fontSize: 17,
+                enabled: ready,
+                onTap: _continue,
               ),
             ),
           ],
@@ -247,13 +221,7 @@ class _DoctorChoice extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-              child: Image.asset(d.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
-            ),
+            DoctorAvatar(doctor: d, size: 52),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -268,17 +236,7 @@ class _DoctorChoice extends StatelessWidget {
             const SizedBox(width: 3),
             Text(d.ratingText, style: ts(14, weight: FontWeight.w600)),
             const SizedBox(width: 10),
-            AnimatedContainer(
-              duration: motion(context, 200),
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: selected ? AppColors.lime : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.ink, width: 1.5),
-              ),
-              child: selected ? const Icon(Icons.check_rounded, size: 18, color: AppColors.onAccent) : null,
-            ),
+            SelectDot(selected: selected),
             const SizedBox(width: 6),
           ],
         ),

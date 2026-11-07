@@ -10,7 +10,7 @@ import 'otp_screen.dart';
 
 /// يرجّع الرقم الوطني (9 أرقام يبدأ بـ 5) أو null إذا غير صحيح
 String? nationalNumber(String raw) {
-  final digits = en(raw).replaceAll(RegExp(r'\D'), '');
+  final digits = normalizeDigits(raw).replaceAll(RegExp(r'\D'), '');
   var n = digits;
   if (n.startsWith('9665')) n = n.substring(3);
   if (n.startsWith('05')) n = n.substring(1);

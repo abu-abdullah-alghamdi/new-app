@@ -7,9 +7,8 @@ import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'cart_screen.dart';
 
-String _date(DateTime d) => '${ar(d.day)} ${monthNames[d.month - 1]} ${ar(d.year)}';
+String _date(DateTime d) => '${fmtNum(d.day)} ${monthNames[d.month - 1]} ${fmtNum(d.year)}';
 
 /// بطاقة طلب: رقم الطلب، الخدمات، الفرع، طريقة الدفع، الإجمالي
 class OrderCard extends StatelessWidget {
@@ -51,7 +50,7 @@ class OrderCard extends StatelessWidget {
               style: ts(13, color: AppColors.faint)),
           const SizedBox(height: 8),
           for (final it in order.items)
-            amountRow('${it.service.name}${it.qty > 1 ? ' × ${ar(it.qty)}' : ''}', money(it.total)),
+            amountRow('${it.service.name}${it.qty > 1 ? ' × ${fmtNum(it.qty)}' : ''}', money(it.total)),
           amountRow('ضريبة القيمة المضافة', money(order.vat)),
           Divider(color: AppColors.bg, height: 16, thickness: 1.5),
           amountRow('الإجمالي', money(order.total), bold: true),

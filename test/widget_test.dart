@@ -4,9 +4,9 @@ import 'package:areem_clinics/services_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('تحويل الأرقام للعربية', () {
-    expect(ar(2026), '2026');
-    expect(en('٠٥٥١'), '0551');
+  test('الأرقام بالإنجليزي', () {
+    expect(fmtNum(2026), '2026');
+    expect(normalizeDigits('٠٥٥١'), '0551');
   });
 
   test('تنسيق الوقت', () {

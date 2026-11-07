@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../main.dart';
@@ -34,7 +33,7 @@ class HomeTab extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 22, 0, navBottomSpace),
         children: [
-          _px(Padding(
+          px(Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +50,7 @@ class HomeTab extends StatelessWidget {
           )),
           if (next != null) ...[
             const SizedBox(height: 16),
-            _px(_NextAppointmentPill(booking: next)),
+            px(_NextAppointmentPill(booking: next)),
           ],
           const SizedBox(height: 16),
           const _BannerCarousel(),
@@ -72,8 +71,6 @@ class HomeTab extends StatelessWidget {
     );
   }
 }
-
-Widget _px(Widget w) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: w);
 
 /// عنوان قسم و"عرض الكل"
 class _SectionHeader extends StatelessWidget {
@@ -122,7 +119,7 @@ class _NextAppointmentPill extends StatelessWidget {
       semanticLabel: 'موعدك القادم مع ${d.name}، ${booking.day.full} الساعة ${fmtTime(booking.time)}، ${booking.branch.name}',
       child: Container(
         constraints: const BoxConstraints(minHeight: 60),
-        padding: const EdgeInsetsDirectional.fromSTEB(8, 8, 8, 8),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(999),
@@ -130,13 +127,7 @@ class _NextAppointmentPill extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-              child: Image.asset(d.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
-            ),
+            DoctorAvatar(doctor: d, size: 44),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -348,7 +339,7 @@ class _OfferBanner extends StatelessWidget {
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: AlignmentDirectional.centerStart,
-                    child: Text('خصم ${ar(sv.discount)}%', style: ts(40, weight: FontWeight.w600, height: 1.1, color: AppColors.lime)),
+                    child: Text('خصم ${fmtNum(sv.discount)}%', style: ts(40, weight: FontWeight.w600, height: 1.1, color: AppColors.lime)),
                   ),
                   const SizedBox(height: 4),
                   Text(sv.name, style: ts(20, color: const Color(0xFFFFFFFF))),
@@ -384,16 +375,10 @@ class _MiniServiceCard extends StatefulWidget {
   State<_MiniServiceCard> createState() => _MiniServiceCardState();
 }
 
-class _MiniServiceCardState extends State<_MiniServiceCard> {
-  bool _added = false;
-
+class _MiniServiceCardState extends State<_MiniServiceCard> with AddedFlash {
   void _add() {
     AppScope.read(context).addToCart(widget.service.id);
-    HapticFeedback.lightImpact();
-    setState(() => _added = true);
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) setState(() => _added = false);
-    });
+    flashAdded(const Duration(milliseconds: 900));
   }
 
   @override
@@ -445,19 +430,19 @@ class _MiniServiceCardState extends State<_MiniServiceCard> {
                   Expanded(child: Text(sv.priceText, style: ts(16, weight: FontWeight.w600))),
                   Pressable(
                     onTap: _add,
-                    semanticLabel: _added ? 'انضافت ${sv.name} للسلة' : 'إضافة ${sv.name} إلى السلة',
+                    semanticLabel: added ? 'انضافت ${sv.name} للسلة' : 'إضافة ${sv.name} إلى السلة',
                     child: AnimatedContainer(
                       duration: motion(context, 200),
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: _added ? AppColors.ink : AppColors.lime,
+                        color: added ? AppColors.ink : AppColors.lime,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
-                        _added ? Icons.check_rounded : Icons.add_rounded,
+                        added ? Icons.check_rounded : Icons.add_rounded,
                         size: 24,
-                        color: _added ? AppColors.white : AppColors.onAccent,
+                        color: added ? AppColors.white : AppColors.onAccent,
                       ),
                     ),
                   ),
@@ -489,13 +474,7 @@ class _MiniDoctorCard extends StatelessWidget {
         decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(30)),
         child: Column(
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-              child: Image.asset(d.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
-            ),
+            DoctorAvatar(doctor: d, size: 100),
             const SizedBox(height: 10),
             Text(d.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(15, weight: FontWeight.w600)),
             Text(d.role, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: ts(13, color: AppColors.body)),

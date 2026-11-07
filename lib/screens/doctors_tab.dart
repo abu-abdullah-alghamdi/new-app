@@ -34,7 +34,7 @@ class _DoctorsTabState extends State<DoctorsTab> {
         .where((d) => q.isEmpty || '${d.name} ${d.role}'.contains(q))
         .toList();
 
-    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
+    // العنوان الكبير يتعامل مع الساعة فوق، والـ SafeArea للأطراف بس
     return SafeArea(
       top: false,
       bottom: false,

@@ -121,7 +121,7 @@ class AccountTab extends StatelessWidget {
           ),
         );
 
-    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
+    // العنوان الكبير يتعامل مع الساعة فوق، والـ SafeArea للأطراف بس
     return SafeArea(
       top: false,
       bottom: false,
@@ -159,9 +159,9 @@ class AccountTab extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              stat(ar(s.upcoming.length), 'مواعيد قادمة', true),
+              stat(fmtNum(s.upcoming.length), 'مواعيد قادمة', true),
               const SizedBox(width: 10),
-              stat(ar(s.completedCount), 'زيارات مكتملة', false),
+              stat(fmtNum(s.completedCount), 'زيارات مكتملة', false),
             ],
           ),
           const SizedBox(height: 14),
@@ -180,7 +180,7 @@ class AccountTab extends StatelessWidget {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (s.orders.isNotEmpty) Text(ar(s.orders.length), style: ts(16, color: AppColors.faint)),
+                          if (s.orders.isNotEmpty) Text(fmtNum(s.orders.length), style: ts(16, color: AppColors.faint)),
                           const SizedBox(width: 6),
                           Icon(CupertinoIcons.forward, size: 18, color: AppColors.faint),
                         ],

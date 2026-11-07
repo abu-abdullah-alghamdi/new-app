@@ -9,7 +9,6 @@ import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
-import 'cart_screen.dart';
 import 'done_screen.dart';
 import 'orders_screen.dart';
 
@@ -64,7 +63,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.dispose();
   }
 
-  String _digits(TextEditingController c) => en(c.text).replaceAll(RegExp(r'\D'), '');
+  String _digits(TextEditingController c) => normalizeDigits(c.text).replaceAll(RegExp(r'\D'), '');
 
   bool get _cardOk {
     if (!_method.needsCard) return true;
@@ -158,13 +157,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 padding: const EdgeInsets.fromLTRB(14, 18, 14, 20),
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 children: [
-                  Row(
-                    children: [
-                      const BackCircle(),
-                      Expanded(child: Text('الدفع', textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w500))),
-                      const SizedBox(width: 58),
-                    ],
-                  ),
+                  const ScreenHeader(title: 'الدفع'),
                   const SizedBox(height: 16),
                   if (PaymentGateway.instance.isDemo)
                     Container(
@@ -204,7 +197,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         const SizedBox(height: 8),
                         for (final it in widget.items)
-                          amountRow('${it.service.name}${it.qty > 1 ? ' × ${ar(it.qty)}' : ''}', money(it.total)),
+                          amountRow('${it.service.name}${it.qty > 1 ? ' × ${fmtNum(it.qty)}' : ''}', money(it.total)),
                         const SizedBox(height: 8),
                       ],
                     ),
@@ -252,21 +245,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: _method == PayMethod.applePay && !_paying
-                    ? PillButton(
-                        label: 'الدفع عبر Apple Pay',
-                        icon: Icons.apple,
-                        height: 66,
-                        bg: AppColors.ink,
-                        fg: AppColors.white,
-                        onTap: _pay,
-                      )
-                    : PillButton(label: payLabel, height: 66, fontSize: 17, enabled: _cardOk && !_paying, onTap: _pay),
-              ),
+            BottomAction(
+              child: _method == PayMethod.applePay && !_paying
+                  ? PillButton(
+                      label: 'الدفع عبر Apple Pay',
+                      icon: Icons.apple,
+                      height: 66,
+                      bg: AppColors.ink,
+                      fg: AppColors.white,
+                      onTap: _pay,
+                    )
+                  : PillButton(label: payLabel, height: 66, fontSize: 17, enabled: _cardOk && !_paying, onTap: _pay),
             ),
           ],
         ),
@@ -314,17 +303,7 @@ class _MethodTile extends StatelessWidget {
                   ],
                 ),
               ),
-              AnimatedContainer(
-                duration: motion(context, 200),
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.lime : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.ink, width: 1.5),
-                ),
-                child: selected ? const Icon(Icons.check_rounded, size: 18, color: AppColors.onAccent) : null,
-              ),
+              SelectDot(selected: selected),
             ],
           ),
         ),

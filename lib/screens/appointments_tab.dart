@@ -38,7 +38,7 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
         .where((b) => _day == null || b.dayIndex == _day)
         .toList();
 
-    // المحتوى يمر تحت الساعة والبطارية وهو ينزل (بدون حد يفصلهم)
+    // العنوان الكبير يتعامل مع الساعة فوق، والـ SafeArea للأطراف بس
     return SafeArea(
       top: false,
       bottom: false,
@@ -49,7 +49,7 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-            child: Text('${monthNames[appToday.month - 1]} ${ar(appToday.year)}', style: ts(17, weight: FontWeight.w500, color: AppColors.body)),
+            child: Text('${monthNames[appToday.month - 1]} ${fmtNum(appToday.year)}', style: ts(17, weight: FontWeight.w500, color: AppColors.body)),
           ),
           HScroll(
             height: 106,

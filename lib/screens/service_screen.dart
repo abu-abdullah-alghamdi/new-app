@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../native.dart';
@@ -21,25 +20,15 @@ class ServiceScreen extends StatefulWidget {
   State<ServiceScreen> createState() => _ServiceScreenState();
 }
 
-class _ServiceScreenState extends State<ServiceScreen> {
+class _ServiceScreenState extends State<ServiceScreen> with AddedFlash {
   int _qty = 1;
   bool _more = false;
-  bool _added = false;
 
   Service get sv => widget.service;
 
   void _add() {
     AppScope.read(context).addToCart(sv.id, qty: _qty);
-    HapticFeedback.lightImpact();
-    setState(() => _added = true);
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (mounted) {
-        setState(() {
-          _added = false;
-          _qty = 1;
-        });
-      }
-    });
+    flashAdded(const Duration(milliseconds: 1200), onReset: () => _qty = 1);
   }
 
   @override
@@ -114,7 +103,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
                         Row(
                           children: [
                             Semantics(
-                              label: 'التقييم ${sv.ratingText} من 5، ${ar(sv.reviews)} تقييم',
+                              label: 'التقييم ${sv.ratingText} من 5، ${fmtNum(sv.reviews)} تقييم',
                               child: ExcludeSemantics(child: RatingRow(rating: sv.ratingText, reviews: sv.reviews)),
                             ),
                             const Spacer(),
@@ -226,10 +215,10 @@ class _ServiceScreenState extends State<ServiceScreen> {
                         SizedBox(
                           width: 36,
                           child: Semantics(
-                            label: 'الكمية ${ar(_qty)}',
+                            label: 'الكمية ${fmtNum(_qty)}',
                             liveRegion: true,
                             child: ExcludeSemantics(
-                              child: Text(ar(_qty), textAlign: TextAlign.center, style: ts(19, weight: FontWeight.w600)),
+                              child: Text(fmtNum(_qty), textAlign: TextAlign.center, style: ts(19, weight: FontWeight.w600)),
                             ),
                           ),
                         ),
@@ -238,7 +227,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
                           size: 48,
                           iconSize: 18,
                           bg: AppColors.bg,
-                          enabled: _qty < 20,
+                          enabled: _qty < maxQty,
                           semanticLabel: 'زيادة الكمية',
                           onTap: () => setState(() => _qty++),
                         ),
@@ -249,14 +238,14 @@ class _ServiceScreenState extends State<ServiceScreen> {
                   Expanded(
                     // الثانوي: السلة (للي يبي يحجز أكثر من خدمة في نفس الزيارة)
                     child: PillButton(
-                      label: _added ? 'تمت الإضافة' : 'أضف إلى السلة',
-                      icon: _added ? Icons.check_rounded : CupertinoIcons.bag_badge_plus,
+                      label: added ? 'تمت الإضافة' : 'أضف إلى السلة',
+                      icon: added ? Icons.check_rounded : CupertinoIcons.bag_badge_plus,
                       height: 60,
                       fontSize: 16,
                       padding: 16,
-                      bg: _added ? AppColors.ink : AppColors.white,
-                      fg: _added ? AppColors.white : AppColors.ink,
-                      onTap: _added ? null : _add,
+                      bg: added ? AppColors.ink : AppColors.white,
+                      fg: added ? AppColors.white : AppColors.ink,
+                      onTap: added ? null : _add,
                     ),
                   ),
                 ],
@@ -281,7 +270,7 @@ class ReviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = review;
     return Semantics(
-      label: '${r.displayName}، ${ar(r.stars)} من 5 نجوم، ${agoText(r.daysAgo)}. ${r.text}',
+      label: '${r.displayName}، ${fmtNum(r.stars)} من 5 نجوم، ${agoText(r.daysAgo)}. ${r.text}',
       child: ExcludeSemantics(
         child: Container(
           padding: const EdgeInsets.all(18),

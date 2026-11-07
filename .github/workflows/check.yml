@@ -1,0 +1,53 @@
+# يفحص الكود تلقائياً مع كل رفع: أخطاء البناء والتحذيرات، والاختبارات
+name: فحص الكود
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter --version
+      - run: flutter pub get
+
+      - name: تحليل الكود
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.txt 2>&1 || true
+          cat analyze.txt
+          # كل ملاحظة تطلع كتنبيه على السطر نفسه في GitHub
+          grep -E '^ *(error|warning|info) • ' analyze.txt | awk -F ' • ' '{
+            sev=$1; gsub(/ /,"",sev); msg=$2; loc=$3; code=$4;
+            split(loc,a,":"); printf "%s|%s|%s|%s|%s\n", sev, a[1], a[2], a[3], msg " (" code ")"
+          }' > raw.txt
+          # الأخطاء أول، بعدها التحذيرات، بعدها الملاحظات
+          { grep '^error|' raw.txt; grep '^warning|' raw.txt; grep '^info|' raw.txt; } > issues.txt || true
+          echo "issues: $(wc -l < issues.txt)"
+          if grep -q '^error|' issues.txt; then echo "has_errors=1" >> "$GITHUB_ENV"; fi
+
+      - name: عرض الملاحظات 1
+        run: |
+          sed -n '1,30p' issues.txt | awk -F '|' '{ t = (NR % 3 == 1) ? "warning" : (NR % 3 == 2) ? "notice" : "error"; printf "::%s file=%s,line=%s,col=%s::[%s] %s\n", t, $2, $3, $4, $1, $5 }'
+      - name: عرض الملاحظات 2
+        run: |
+          sed -n '31,60p' issues.txt | awk -F '|' '{ t = (NR % 3 == 1) ? "warning" : (NR % 3 == 2) ? "notice" : "error"; printf "::%s file=%s,line=%s,col=%s::[%s] %s\n", t, $2, $3, $4, $1, $5 }'
+      - name: عرض الملاحظات 3
+        run: |
+          sed -n '61,90p' issues.txt | awk -F '|' '{ t = (NR % 3 == 1) ? "warning" : (NR % 3 == 2) ? "notice" : "error"; printf "::%s file=%s,line=%s,col=%s::[%s] %s\n", t, $2, $3, $4, $1, $5 }'
+      - name: عرض الملاحظات 4
+        run: |
+          sed -n '91,120p' issues.txt | awk -F '|' '{ t = (NR % 3 == 1) ? "warning" : (NR % 3 == 2) ? "notice" : "error"; printf "::%s file=%s,line=%s,col=%s::[%s] %s\n", t, $2, $3, $4, $1, $5 }'
+
+      - name: الاختبارات
+        run: flutter test
+
+      - name: نتيجة التحليل
+        run: test -z "$has_errors"

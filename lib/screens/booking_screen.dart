@@ -69,8 +69,6 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
-  Widget _px(Widget child) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: child);
-
   @override
   Widget build(BuildContext context) {
     final indexes = List.generate(slotTimes.length, (i) => i);
@@ -90,29 +88,21 @@ class _BookingScreenState extends State<BookingScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(0, 18, 0, 20),
                 children: [
-                  _px(Row(
-                    children: [
-                      const BackCircle(close: true),
-                      Expanded(
-                        child: Text(
-                          editing != null ? 'إعادة جدولة' : 'حجز موعد',
-                          textAlign: TextAlign.center,
-                          style: ts(18, weight: FontWeight.w500),
-                        ),
+                  px(ScreenHeader(
+                    title: editing != null ? 'إعادة جدولة' : 'حجز موعد',
+                    close: true,
+                    // مشاركة الطبيب بقائمة آبل الأصلية
+                    trailing: Builder(
+                      builder: (ctx) => CircleButton(
+                        icon: CupertinoIcons.share,
+                        semanticLabel: 'مشاركة الطبيب',
+                        onTap: () => shareText(ctx, shareDoctorText(d)),
                       ),
-                      // مشاركة الطبيب بقائمة آبل الأصلية
-                      Builder(
-                        builder: (ctx) => CircleButton(
-                          icon: CupertinoIcons.share,
-                          semanticLabel: 'مشاركة الطبيب',
-                          onTap: () => shareText(ctx, shareDoctorText(d)),
-                        ),
-                      ),
-                    ],
+                    ),
                   )),
                   if (editing != null) ...[
                     const SizedBox(height: 14),
-                    _px(Container(
+                    px(Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(999)),
                       child: Text(
@@ -123,7 +113,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     )),
                   ],
                   const SizedBox(height: 14),
-                  _px(CutCard(
+                  px(CutCard(
                     image: d.image,
                     corner: FavButton(
                       active: s.favDoctors.contains(d.id),
@@ -147,9 +137,9 @@ class _BookingScreenState extends State<BookingScreen> {
                     ],
                   )),
                   const SizedBox(height: 10),
-                  _px(_DoctorStats(doctor: d)),
+                  px(_DoctorStats(doctor: d)),
                   const SizedBox(height: 10),
-                  _px(Container(
+                  px(Container(
                     padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                     decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(40)),
                     child: Column(
@@ -174,12 +164,12 @@ class _BookingScreenState extends State<BookingScreen> {
                   )),
                   // الفروع اللي يداوم فيها الطبيب
                   const SizedBox(height: 18),
-                  _px(Padding(
+                  px(Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Text('يداوم في', style: ts(20, weight: FontWeight.w500)),
                   )),
                   const SizedBox(height: 10),
-                  _px(Wrap(
+                  px(Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
@@ -188,41 +178,28 @@ class _BookingScreenState extends State<BookingScreen> {
                     ],
                   )),
                   const SizedBox(height: 18),
-                  _px(BigTitle('${monthNames[appToday.month - 1]} ${ar(appToday.year)}', size: 30)),
+                  px(BigTitle('${monthNames[appToday.month - 1]} ${fmtNum(appToday.year)}', size: 30)),
                   const SizedBox(height: 12),
-                  HScroll(
-                    height: 106,
-                    children: [
-                      for (var i = 0; i < 14; i++)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: DayPill(
-                            top: DayInfo(i).dayNum,
-                            bottom: DayInfo(i).closed ? 'مغلق' : DayInfo(i).short,
-                            semanticLabel: DayInfo(i).full,
-                            closed: DayInfo(i).closed,
-                            selected: _day == i,
-                            onTap: () => setState(() {
-                              _day = i;
-                              _time = null;
-                            }),
-                          ),
-                        ),
-                    ],
+                  DayStrip(
+                    selected: _day,
+                    onSelect: (i) => setState(() {
+                      _day = i;
+                      _time = null;
+                    }),
                   ),
                   const SizedBox(height: 18),
-                  _px(Padding(
+                  px(Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Row(
                       children: [
                         Text('الأوقات المتاحة', style: ts(20, weight: FontWeight.w500)),
                         const Spacer(),
-                        if (_day != null) Text('${ar(freeCount)} أوقات', style: ts(14, color: AppColors.body)),
+                        if (_day != null) Text('${fmtNum(freeCount)} أوقات', style: ts(14, color: AppColors.body)),
                       ],
                     ),
                   )),
                   const SizedBox(height: 12),
-                  _px(Wrap(
+                  px(Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
@@ -311,7 +288,7 @@ class _RatingLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'التقييم ${doctor.ratingText} من 5، ${ar(doctor.reviews)} تقييم',
+      label: 'التقييم ${doctor.ratingText} من 5، ${fmtNum(doctor.reviews)} تقييم',
       child: ExcludeSemantics(
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -320,7 +297,7 @@ class _RatingLine extends StatelessWidget {
             const SizedBox(width: 4),
             Text(doctor.ratingText, style: ts(16, weight: FontWeight.w600)),
             const SizedBox(width: 4),
-            Flexible(child: Text('(${ar(doctor.reviews)} تقييم)', style: ts(14, color: AppColors.body))),
+            Flexible(child: Text('(${fmtNum(doctor.reviews)} تقييم)', style: ts(14, color: AppColors.body))),
           ],
         ),
       ),
@@ -337,10 +314,10 @@ class _DoctorStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      (Icons.person_rounded, '${ar(doctor.patients)}+', 'المرضى', '${ar(doctor.patients)} مريض وأكثر'),
-      (Icons.verified_rounded, '${ar(doctor.yearsCount)}+', 'سنوات الخبرة', '${ar(doctor.yearsCount)} سنوات خبرة وأكثر'),
+      (Icons.person_rounded, '${fmtNum(doctor.patients)}+', 'المرضى', '${fmtNum(doctor.patients)} مريض وأكثر'),
+      (Icons.verified_rounded, '${fmtNum(doctor.yearsCount)}+', 'سنوات الخبرة', '${fmtNum(doctor.yearsCount)} سنوات خبرة وأكثر'),
       (Icons.star_rounded, doctor.ratingText, 'التقييم', 'التقييم ${doctor.ratingText}'),
-      (Icons.chat_bubble_rounded, '${ar(doctor.reviews)}+', 'التقييمات', '${ar(doctor.reviews)} تقييم وأكثر'),
+      (Icons.chat_bubble_rounded, '${fmtNum(doctor.reviews)}+', 'التقييمات', '${fmtNum(doctor.reviews)} تقييم وأكثر'),
     ];
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 22, 10, 18),

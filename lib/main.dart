@@ -27,13 +27,13 @@ Future<void> main() async {
   runApp(AreemApp(showOnboarding: !seen));
 }
 
-ThemeData _theme(Brightness b) {
+ThemeData _theme() {
   final base = ThemeData(
     useMaterial3: true,
     fontFamily: appFont,
-    brightness: b,
-    scaffoldBackgroundColor: b == Brightness.dark ? const Color(0xFF0B0B0C) : const Color(0xFFEEEEF0),
-    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.lime, brightness: b),
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: AppColors.bg,
+    colorScheme: ColorScheme.fromSeed(seedColor: AppColors.lime),
     splashFactory: NoSplash.splashFactory,
     highlightColor: Colors.transparent,
     pageTransitionsTheme: const PageTransitionsTheme(builders: {
@@ -41,9 +41,8 @@ ThemeData _theme(Brightness b) {
       TargetPlatform.android: CupertinoPageTransitionsBuilder(),
     }),
   );
-  final text = b == Brightness.dark ? Colors.white : Colors.black;
   return base.copyWith(
-    textTheme: base.textTheme.apply(fontFamily: appFont, bodyColor: text, displayColor: text),
+    textTheme: base.textTheme.apply(fontFamily: appFont, bodyColor: AppColors.ink, displayColor: AppColors.ink),
     // عناصر آبل المرسومة في فلاتر (قائمة الضغط المطوّل، شريط العنوان، السحب للتحديث) بنفس الخط
     cupertinoOverrideTheme: CupertinoThemeData(
       brightness: Brightness.light,
@@ -79,19 +78,15 @@ class AreemApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        // التطبيق فاتح دايماً (الوضع الداكن متوقف؛ ألوانه باقية في theme.dart لو احتجناها)
-        theme: _theme(Brightness.light),
-        themeMode: ThemeMode.light,
-        builder: (context, child) {
-          AppColors.dark = false;
-          return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: SystemUiOverlayStyle.dark,
-            child: MediaQuery(
-              data: MediaQuery.of(context).copyWith(platformBrightness: Brightness.light),
-              child: child!,
-            ),
-          );
-        },
+        // التطبيق فاتح دايماً (حتى لو الجوال على الوضع الداكن)
+        theme: _theme(),
+        builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle.dark,
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(platformBrightness: Brightness.light),
+            child: child!,
+          ),
+        ),
         // يتصفح على طول؛ التسجيل يطلب لما يحجز أو يدفع
         home: showOnboarding ? const OnboardingScreen() : const MainShell(),
       ),

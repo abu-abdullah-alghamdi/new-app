@@ -22,7 +22,7 @@ void finishLogin(BuildContext context, {required bool inside}) {
   }
 }
 
-String formatBirth(DateTime d) => '${ar(d.day)} ${monthNames[d.month - 1]} ${ar(d.year)}';
+String formatBirth(DateTime d) => '${fmtNum(d.day)} ${monthNames[d.month - 1]} ${fmtNum(d.year)}';
 
 /// يعرض الجوال 05xxxxxxxx بالشكل +966 5x xxx xxxx
 String displayPhone(String phone) {
@@ -94,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   bool get _saudi => _nationality == saudiArabia;
-  String get _idDigits => en(_id.text).replaceAll(RegExp(r'\D'), '');
+  String get _idDigits => normalizeDigits(_id.text).replaceAll(RegExp(r'\D'), '');
   bool get _nameOk => _name.text.trim().length >= 3;
   bool get _idOk => RegExp(_saudi ? r'^1\d{9}$' : r'^2\d{9}$').hasMatch(_idDigits);
   bool get _emailOk {
@@ -315,16 +315,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-              child: SizedBox(
-                width: double.infinity,
-                child: PillButton(
-                  label: widget.editing ? 'حفظ' : 'متابعة',
-                  height: 66,
-                  enabled: _valid,
-                  onTap: _submit,
-                ),
+            BottomAction(
+              child: PillButton(
+                label: widget.editing ? 'حفظ' : 'متابعة',
+                height: 66,
+                enabled: _valid,
+                onTap: _submit,
               ),
             ),
           ],
@@ -526,7 +522,7 @@ class _BirthSheetState extends State<_BirthSheet> {
                         count: 31,
                         semantic: 'اليوم',
                         // الأيام اللي ما تنفع للشهر المختار تطلع باهتة
-                        item: (i) => Text(ar(i + 1), style: ts(20, color: i < _maxDay ? AppColors.ink : AppColors.faint)),
+                        item: (i) => Text(fmtNum(i + 1), style: ts(20, color: i < _maxDay ? AppColors.ink : AppColors.faint)),
                         onChanged: (i) => setState(() {
                           _day = i + 1;
                           _fixDay();
@@ -552,7 +548,7 @@ class _BirthSheetState extends State<_BirthSheet> {
                         controller: _yearCtrl,
                         count: _now.year - _firstYear + 1,
                         semantic: 'السنة',
-                        item: (i) => Text(ar(_firstYear + i), style: ts(20)),
+                        item: (i) => Text(fmtNum(_firstYear + i), style: ts(20)),
                         onChanged: (i) => setState(() {
                           _year = _firstYear + i;
                           _fixDay();

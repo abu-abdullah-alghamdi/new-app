@@ -51,7 +51,7 @@ class Service {
 
   int get finalPrice => (price * (100 - discount) / 100).round();
   bool get onOffer => discount > 0;
-  String get oldPriceText => '${ar(price)} ريال';
+  String get oldPriceText => '${fmtNum(price)} ريال';
 
   final String id;
   final String name;
@@ -75,7 +75,7 @@ class Service {
       ? 'متوفرة في جميع الفروع'
       : 'متوفرة في: ${availableIn.map((id) => branchById(id).name).join('، ')}';
 
-  String get priceText => '${ar(finalPrice)} ريال';
+  String get priceText => '${fmtNum(finalPrice)} ريال';
   String get ratingText => rating.toStringAsFixed(1);
 }
 
@@ -212,11 +212,11 @@ String agoText(int d) {
   if (d <= 0) return 'اليوم';
   if (d == 1) return 'أمس';
   if (d == 2) return 'قبل يومين';
-  if (d <= 10) return 'قبل ${ar(d)} أيام';
-  if (d < 30) return 'قبل ${ar(d)} يوم';
+  if (d <= 10) return 'قبل ${fmtNum(d)} أيام';
+  if (d < 30) return 'قبل ${fmtNum(d)} يوم';
   if (d < 60) return 'قبل شهر';
   if (d < 90) return 'قبل شهرين';
-  return 'قبل ${ar(d ~/ 30)} شهور';
+  return 'قبل ${fmtNum(d ~/ 30)} شهور';
 }
 
 /// نبذة كل خدمة (نص تجريبي)

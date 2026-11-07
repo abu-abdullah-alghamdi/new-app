@@ -65,8 +65,21 @@ class Order {
   int get count => items.fold(0, (a, b) => a + b.qty);
 }
 
+/// أكبر كمية للخدمة الوحدة في السلة
+const maxQty = 20;
+
 /// حالة التطبيق العامة
 class AppState extends ChangeNotifier {
+  /// يبدأ بموعدين تجريبيين: واحد قادم وواحد مكتمل (بعيد عن يوم الجمعة)
+  AppState() {
+    final up = DayInfo(3).closed ? 4 : 3;
+    final past = DayInfo(-2).closed ? -3 : -2;
+    bookings.addAll([
+      Booking(id: 'seed1', doctorId: 'd2', cat: 'ortho', dayIndex: up, time: 120, branchId: 'rawdah'),
+      Booking(id: 'seed2', doctorId: 'd4', cat: 'derma', dayIndex: past, time: 60, branchId: 'hamdaniyah'),
+    ]);
+  }
+
   /// يزيد مع كل تغيير (نستخدمه عشان التبويب الظاهر بس يعيد رسم نفسه)
   int version = 0;
 
@@ -74,17 +87,6 @@ class AppState extends ChangeNotifier {
   void notifyListeners() {
     version++;
     super.notifyListeners();
-  }
-
-  AppState() {
-    var up = 3;
-    if (DayInfo(up).closed) up = 4;
-    var past = -2;
-    if (DayInfo(past).closed) past = -3;
-    bookings = [
-      Booking(id: 'seed1', doctorId: 'd2', cat: 'ortho', dayIndex: up, time: 120, branchId: 'rawdah'),
-      Booking(id: 'seed2', doctorId: 'd4', cat: 'derma', dayIndex: past, time: 60, branchId: 'hamdaniyah'),
-    ];
   }
 
   // المستخدم
@@ -122,21 +124,14 @@ class AppState extends ChangeNotifier {
 
   double vatFor(int subtotal) => chargesVat ? subtotal * vatRate : 0;
 
-  /// الفروع اللي تتوفر فيها كل الخدمات اللي في السلة
-  List<Branch> get cartBranches => branches
-      .where((b) => cartItems.every((i) => i.service.availableIn.contains(b.id)))
-      .toList();
-
   void addToCart(String serviceId, {int qty = 1}) {
-    cart[serviceId] = ((cart[serviceId] ?? 0) + qty).clamp(1, 20);
+    cart[serviceId] = ((cart[serviceId] ?? 0) + qty).clamp(1, maxQty);
     notifyListeners();
   }
 
   // المفضلة (تشتغل للزائر أيضاً)
   final Set<String> favDoctors = {};
   final Set<String> favServices = {};
-
-  int get favCount => favDoctors.length + favServices.length;
 
   void toggleFavDoctor(String id) {
     if (!favDoctors.remove(id)) favDoctors.add(id);
@@ -152,7 +147,7 @@ class AppState extends ChangeNotifier {
     if (qty <= 0) {
       cart.remove(serviceId);
     } else {
-      cart[serviceId] = qty.clamp(1, 20);
+      cart[serviceId] = qty.clamp(1, maxQty);
     }
     notifyListeners();
   }
@@ -186,7 +181,7 @@ class AppState extends ChangeNotifier {
     return o;
   }
 
-  late List<Booking> bookings;
+  final List<Booking> bookings = [];
 
   String get firstName {
     final parts = name.trim().split(' ');
@@ -269,14 +264,7 @@ class AppState extends ChangeNotifier {
 
   void logout() {
     if (phone.isNotEmpty) _savedOrders[phone] = [...orders];
-    name = '';
-    phone = '';
-    profile = null;
-    loggedIn = false;
-    tab = 0;
-    cart.clear();
-    orders.clear();
-    notifyListeners();
+    _signOut();
   }
 
   /// حذف الحساب: يمسح بيانات المستخدم ومواعيده من التطبيق
@@ -286,20 +274,19 @@ class AppState extends ChangeNotifier {
     _savedOrders.remove(phone);
     favDoctors.clear();
     favServices.clear();
+    bookings.clear();
+    _signOut();
+  }
+
+  /// يرجّع التطبيق لوضع الزائر (مشتركة بين الخروج وحذف الحساب)
+  void _signOut() {
     name = '';
     phone = '';
     profile = null;
     loggedIn = false;
     tab = 0;
-    bookings.clear();
     cart.clear();
     orders.clear();
-    notifyListeners();
-  }
-
-  void setProfile({required String name, required String phone}) {
-    this.name = name;
-    this.phone = phone;
     notifyListeners();
   }
 

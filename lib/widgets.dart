@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'data.dart';
+import 'services_data.dart';
 import 'theme.dart';
 
 /// يحوّل أي رقم عربي يكتبه المستخدم (٠١٢…) إلى إنجليزي (012…) أثناء الكتابة
@@ -13,7 +14,7 @@ class WesternDigits extends TextInputFormatter {
 
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    final text = en(newValue.text);
+    final text = normalizeDigits(newValue.text);
     if (text == newValue.text) return newValue;
     return newValue.copyWith(text: text);
   }
@@ -92,11 +93,8 @@ class _PressableState extends State<Pressable> {
         child: AnimatedScale(
           scale: _down && !reduce ? 0.96 : 1,
           duration: motion(context, 120),
-          child: AnimatedOpacity(
-            opacity: _down && reduce ? 0.6 : 1,
-            duration: Duration.zero,
-            child: widget.child,
-          ),
+          // مع "تقليل الحركة" الضغط يخفّت الزر بدل ما يصغّره
+          child: Opacity(opacity: _down && reduce ? 0.6 : 1, child: widget.child),
         ),
       ),
     );
@@ -429,47 +427,8 @@ class HScroll extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           clipBehavior: Clip.none,
           itemCount: children.length,
-          separatorBuilder: (_, __) => SizedBox(width: gap),
+          separatorBuilder: (_, _) => SizedBox(width: gap),
           itemBuilder: (_, i) => children[i],
-        ),
-      );
-}
-
-/// مفتاح تشغيل وإيقاف
-class AppSwitch extends StatelessWidget {
-  const AppSwitch({super.key, required this.value, required this.onChanged});
-
-  final bool value;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-        toggled: value,
-        child: GestureDetector(
-          onTap: onChanged,
-          child: AnimatedContainer(
-            duration: motion(context, 220),
-            width: 52,
-            height: 30,
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: value ? AppColors.ink : AppColors.switchOff,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: AnimatedAlign(
-              duration: motion(context, 220),
-              curve: Curves.easeOut,
-              alignment: value ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: value ? AppColors.lime : const Color(0xFFFFFFFF),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ),
         ),
       );
 }
@@ -759,4 +718,159 @@ class FavButton extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// صف في ملخص المبلغ
+Widget amountRow(String label, String value, {bool bold = false}) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: ts(bold ? 17 : 15, weight: bold ? FontWeight.w600 : FontWeight.w400, color: bold ? AppColors.ink : AppColors.body)),
+          ),
+          Text(value, style: ts(bold ? 19 : 15, weight: bold ? FontWeight.w700 : FontWeight.w500)),
+        ],
+      ),
+    );
+
+/// ملخص المبلغ: المجموع والضريبة والإجمالي
+class AmountSummary extends StatelessWidget {
+  const AmountSummary({super.key, required this.subtotal, required this.vat});
+
+  final num subtotal;
+  final double vat;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
+        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(32)),
+        child: Column(
+          children: vat > 0
+              ? [
+                  amountRow('المجموع', money(subtotal)),
+                  amountRow('ضريبة القيمة المضافة (${fmtNum((vatRate * 100).round())}%)', money(vat)),
+                  Divider(color: AppColors.bg, height: 18, thickness: 1.5),
+                  amountRow('الإجمالي', money(subtotal + vat), bold: true),
+                ]
+              // المواطن السعودي (والزائر قبل التسجيل): الإجمالي بس
+              : [amountRow('الإجمالي', money(subtotal), bold: true)],
+        ),
+      );
+}
+
+/// هامش الصفحات الجانبي
+Widget px(Widget child) => Padding(padding: const EdgeInsets.symmetric(horizontal: 14), child: child);
+
+/// رأس الصفحة: زر رجوع (أو إغلاق)، العنوان في النص، وزر اختياري على الطرف الثاني
+class ScreenHeader extends StatelessWidget {
+  const ScreenHeader({super.key, required this.title, this.close = false, this.trailing});
+
+  final String title;
+  final bool close;
+
+  /// بدونه نترك مسافة بعرض زر الرجوع عشان العنوان يبقى في النص
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          BackCircle(close: close),
+          Expanded(child: Text(title, textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w500))),
+          trailing ?? const SizedBox(width: 58),
+        ],
+      );
+}
+
+/// منطقة الزر الأساسي أسفل الصفحة (بعرض الشاشة)
+class BottomAction extends StatelessWidget {
+  const BottomAction({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
+        child: SizedBox(width: double.infinity, child: child),
+      );
+}
+
+/// صورة الطبيب في دائرة ليمونية
+class DoctorAvatar extends StatelessWidget {
+  const DoctorAvatar({super.key, required this.doctor, required this.size});
+
+  final Doctor doctor;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        clipBehavior: Clip.antiAlias,
+        decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+        child: Image.asset(doctor.image, fit: BoxFit.cover, alignment: Alignment.topCenter),
+      );
+}
+
+/// دائرة الاختيار في القوائم (تتعبّى ليموني مع علامة صح)
+class SelectDot extends StatelessWidget {
+  const SelectDot({super.key, required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+        duration: motion(context, 200),
+        width: 26,
+        height: 26,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.lime : Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.ink, width: 1.5),
+        ),
+        child: selected ? const Icon(Icons.check_rounded, size: 18, color: AppColors.onAccent) : null,
+      );
+}
+
+/// شريط الأيام: أسبوعين من اليوم، والجمعة مغلقة
+class DayStrip extends StatelessWidget {
+  const DayStrip({super.key, required this.selected, required this.onSelect});
+
+  final int? selected;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) => HScroll(
+        height: 106,
+        children: [
+          for (final day in [for (var i = 0; i < 14; i++) DayInfo(i)])
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: DayPill(
+                top: day.dayNum,
+                bottom: day.closed ? 'مغلق' : day.short,
+                semanticLabel: day.full,
+                closed: day.closed,
+                selected: selected == day.offset,
+                onTap: () => onSelect(day.offset),
+              ),
+            ),
+        ],
+      );
+}
+
+/// علامة "تمت الإضافة" لحظة بعد الإضافة للسلة، وبعدها يرجع الزر لحالته
+mixin AddedFlash<T extends StatefulWidget> on State<T> {
+  bool added = false;
+
+  void flashAdded(Duration duration, {VoidCallback? onReset}) {
+    HapticFeedback.lightImpact();
+    setState(() => added = true);
+    Future.delayed(duration, () {
+      if (!mounted) return;
+      setState(() {
+        added = false;
+        onReset?.call();
+      });
+    });
+  }
 }

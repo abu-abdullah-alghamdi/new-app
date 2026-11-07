@@ -60,7 +60,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
     super.dispose();
   }
 
-  String get _code => en(_ctrl.text).replaceAll(RegExp(r'\D'), '');
+  String get _code => normalizeDigits(_ctrl.text).replaceAll(RegExp(r'\D'), '');
 
   void _onChanged(String _) {
     final v = _code;
@@ -182,7 +182,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                                         borderRadius: BorderRadius.circular(26),
                                         border: Border.all(color: borderColor, width: 2),
                                       ),
-                                      child: Text(filled ? ar(code[i]) : '', style: ts(34, weight: FontWeight.w500, color: _ok ? AppColors.onAccent : null)),
+                                      child: Text(filled ? fmtNum(code[i]) : '', style: ts(34, weight: FontWeight.w500, color: _ok ? AppColors.onAccent : null)),
                                     ),
                                   ),
                                 );
@@ -225,7 +225,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                               TextSpan(children: [
                                 const TextSpan(text: 'إعادة الإرسال بعد '),
                                 TextSpan(
-                                  text: '⁦0:${ar(_left.toString().padLeft(2, '0'))}⁩',
+                                  text: '⁦0:${fmtNum(_left.toString().padLeft(2, '0'))}⁩',
                                   style: ts(14, weight: FontWeight.w600),
                                 ),
                               ]),

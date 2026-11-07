@@ -8,52 +8,9 @@ import '../theme.dart';
 import '../widgets.dart';
 import 'service_booking_screen.dart';
 
-/// صف في ملخص المبلغ
-Widget amountRow(String label, String value, {bool bold = false}) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(label, style: ts(bold ? 17 : 15, weight: bold ? FontWeight.w600 : FontWeight.w400, color: bold ? AppColors.ink : AppColors.body)),
-          ),
-          Text(value, style: ts(bold ? 19 : 15, weight: bold ? FontWeight.w700 : FontWeight.w500)),
-        ],
-      ),
-    );
-
-/// ملخص المبلغ: المجموع والضريبة والإجمالي
-class AmountSummary extends StatelessWidget {
-  const AmountSummary({super.key, required this.subtotal, required this.vat});
-
-  final num subtotal;
-  final double vat;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
-        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(32)),
-        child: Column(
-          children: vat > 0
-              ? [
-                  amountRow('المجموع', money(subtotal)),
-                  amountRow('ضريبة القيمة المضافة (${ar((vatRate * 100).round())}%)', money(vat)),
-                  Divider(color: AppColors.bg, height: 18, thickness: 1.5),
-                  amountRow('الإجمالي', money(subtotal + vat), bold: true),
-                ]
-              // المواطن السعودي (والزائر قبل التسجيل): الإجمالي بس
-              : [amountRow('الإجمالي', money(subtotal), bold: true)],
-        ),
-      );
-}
-
-class CartScreen extends StatefulWidget {
+class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
-  @override
-  State<CartScreen> createState() => _CartScreenState();
-}
-
-class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
@@ -67,13 +24,7 @@ class _CartScreenState extends State<CartScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 18, 14, 20),
                 children: [
-                  Row(
-                    children: [
-                      const BackCircle(),
-                      Expanded(child: Text('السلة', textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w500))),
-                      const SizedBox(width: 58),
-                    ],
-                  ),
+                  const ScreenHeader(title: 'السلة'),
                   const SizedBox(height: 18),
                   if (items.isEmpty)
                     _Empty(onBrowse: () => Navigator.of(context).maybePop())
@@ -98,18 +49,14 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
             if (items.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  // السلة تكمل في نفس رحلة الحجز: الفرع ← الطبيب ← اليوم ← الوقت ← الدفع
-                  child: PillButton(
-                    label: 'اختيار الموعد · ${money(s.cartTotal)}',
-                    icon: CupertinoIcons.calendar,
-                    height: 66,
-                    fontSize: 17,
-                    onTap: () => openServiceBooking(context, s.cartItems, fromCart: true),
-                  ),
+              // السلة تكمل في نفس رحلة الحجز: الفرع ← الطبيب ← اليوم ← الوقت ← الدفع
+              BottomAction(
+                child: PillButton(
+                  label: 'اختيار الموعد · ${money(s.cartTotal)}',
+                  icon: CupertinoIcons.calendar,
+                  height: 66,
+                  fontSize: 17,
+                  onTap: () => openServiceBooking(context, s.cartItems, fromCart: true),
                 ),
               ),
           ],
@@ -191,9 +138,9 @@ class _CartRow extends StatelessWidget {
           SizedBox(
             width: 34,
             child: Semantics(
-              label: 'الكمية ${ar(item.qty)}',
+              label: 'الكمية ${fmtNum(item.qty)}',
               child: ExcludeSemantics(
-                child: Text(ar(item.qty), textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w600)),
+                child: Text(fmtNum(item.qty), textAlign: TextAlign.center, style: ts(18, weight: FontWeight.w600)),
               ),
             ),
           ),

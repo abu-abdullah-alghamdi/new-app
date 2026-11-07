@@ -17,7 +17,6 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
-    final bg = AppColors.bg;
     final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
       body: Stack(
@@ -49,7 +48,7 @@ class MainShell extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [bg.withAlpha(225), bg.withAlpha(150), bg.withAlpha(0)],
+                    colors: [AppColors.bg.withAlpha(225), AppColors.bg.withAlpha(150), AppColors.bg.withAlpha(0)],
                     stops: const [0, 0.55, 1],
                   ),
                 ),
@@ -64,21 +63,18 @@ class MainShell extends StatelessWidget {
             child: SafeArea(
               top: false,
               bottom: false,
-              child: Padding(
-                padding: EdgeInsets.zero,
-                child: AnimatedSwitcher(
-                  duration: motion(context, 250),
-                  transitionBuilder: (child, a) => FadeTransition(
-                    opacity: a,
-                    child: SlideTransition(
-                      position: Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(a),
-                      child: child,
-                    ),
+              child: AnimatedSwitcher(
+                duration: motion(context, 250),
+                transitionBuilder: (child, a) => FadeTransition(
+                  opacity: a,
+                  child: SlideTransition(
+                    position: Tween(begin: const Offset(0, 0.4), end: Offset.zero).animate(a),
+                    child: child,
                   ),
-                  child: s.tab == 4 && s.cartCount > 0
-                      ? CartBar(key: const ValueKey('cart-bar'), count: s.cartCount, subtotal: s.cartSubtotal)
-                      : const SizedBox(key: ValueKey('no-bar'), width: double.infinity),
                 ),
+                child: s.tab == 4 && s.cartCount > 0
+                    ? CartBar(key: const ValueKey('cart-bar'), count: s.cartCount, subtotal: s.cartSubtotal)
+                    : const SizedBox(key: ValueKey('no-bar'), width: double.infinity),
               ),
             ),
           ),
@@ -95,7 +91,6 @@ const navBottomSpace = 120.0;
 
 /// ارتفاع شريط آبل تقريباً (من فوق الشريط لأسفل الشاشة بدون منطقة الأمان)
 const navBarHeight = 62.0;
-const navBarBottom = 0.0;
 
 /// ترتيب التبويبات في الشريط (من اليمين): الرئيسية، الأطباء، الخدمات، مواعيدي، حسابي
 const _order = [0, 2, 4, 1, 3];
@@ -116,7 +111,12 @@ class GlassNavBar extends StatelessWidget {
       currentIndex: index,
       onTap: (i) {
         final tab = _order[i];
-        tab == 2 ? s.openDoctors() : s.setTab(tab);
+        // تبويب الأطباء يفتح دايماً على "الكل"
+        if (tab == 2) {
+          s.openDoctors();
+        } else {
+          s.setTab(tab);
+        }
       },
       tint: AppColors.ink,
       labelFontFamily: appFont,
