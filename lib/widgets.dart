@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -352,7 +354,7 @@ class DayPill extends StatelessWidget {
       selected: selected,
       semanticLabel: '$semanticLabel${closed ? '، مغلق' : ''}${dot ? '، فيه موعد' : ''}',
       child: MediaQuery.withClampedTextScaling(
-        maxScaleFactor: 1.3,
+        maxScaleFactor: 2.0,
         child: AnimatedContainer(
           duration: motion(context, 250),
           width: 70 * s,
@@ -395,7 +397,7 @@ class FilterPill extends StatelessWidget {
         selected: selected,
         semanticLabel: label,
         child: MediaQuery.withClampedTextScaling(
-          maxScaleFactor: 1.3,
+          maxScaleFactor: 2.0,
           child: AnimatedContainer(
             duration: motion(context, 250),
             height: 60 * uiScale(context),
@@ -527,30 +529,199 @@ InputDecoration pillInput(String hint) => InputDecoration(
       ),
     );
 
-/// نافذة منبثقة من تحت بأسلوب iOS (نستخدمها للإشعارات والخيارات)
+/// نافذة منبثقة بأسلوب iOS 26: زجاج، تطفو بهوامش عن أطراف الشاشة، ولها مقبض سحب
 Future<void> showAppSheet(BuildContext context, {required String title, required List<Widget> children}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: AppColors.white,
-    showDragHandle: true,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-    builder: (ctx) => SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Semantics(header: true, child: Text(title, style: ts(22, weight: FontWeight.w500))),
-            const SizedBox(height: 14),
-            ...children,
-          ],
-        ),
+  return showGlassSheet<void>(
+    context,
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(header: true, child: Text(title, style: ts(22, weight: FontWeight.w500))),
+          const SizedBox(height: 14),
+          ...children,
+        ],
       ),
     ),
   );
+}
+
+/// يفتح نافذة زجاجية عائمة (نفس نوافذ آبل الأصلية)
+Future<T?> showGlassSheet<T>(BuildContext context, {required WidgetBuilder builder, bool scrollControlled = true}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    barrierColor: const Color(0x33000000),
+    isScrollControlled: scrollControlled,
+    useSafeArea: true,
+    builder: (ctx) => GlassSheet(child: builder(ctx)),
+  );
+}
+
+/// غلاف النافذة الزجاجية: هامش 8 من الأطراف، حواف دائرية كبيرة، تغبيش خلفي، ومقبض
+class GlassSheet extends StatelessWidget {
+  const GlassSheet({super.key, required this.child, this.fill = false});
+
+  final Widget child;
+
+  /// تاخذ الارتفاع كامل (للقوائم الطويلة اللي تنسحب لفوق)
+  final bool fill;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final solid = highContrast(context);
+    const radius = BorderRadius.all(Radius.circular(36));
+    return Padding(
+      padding: EdgeInsets.fromLTRB(8, 0, 8, keyboard > 0 ? keyboard + 8 : (safeBottom > 0 ? safeBottom * 0.35 + 4 : 8)),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          borderRadius: radius,
+          boxShadow: [BoxShadow(color: Color(0x26000000), blurRadius: 30, offset: Offset(0, 8))],
+        ),
+        child: ClipRRect(
+          borderRadius: radius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: solid ? AppColors.white : const Color(0xEBFFFFFF),
+                borderRadius: radius,
+                border: Border.all(color: solid ? AppColors.ink : const Color(0xB3FFFFFF), width: solid ? 1.5 : 1),
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: Column(
+                  mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // مقبض السحب
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 5,
+                        margin: const EdgeInsets.only(top: 8, bottom: 14),
+                        decoration: BoxDecoration(color: const Color(0x4D3C3C43), borderRadius: BorderRadius.circular(3)),
+                      ),
+                    ),
+                    if (fill) Expanded(child: child) else Flexible(child: child),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// صفحة تبويب بعنوان كبير يصغر ويثبت فوق في شريط زجاجي وأنت تمرر (مثل الإعدادات والصور)
+class LargeTitleScroll extends StatelessWidget {
+  const LargeTitleScroll({
+    super.key,
+    required this.title,
+    required this.children,
+    this.trailing,
+    this.onRefresh,
+    this.horizontal = 0,
+    this.bottomSpace = 0,
+  });
+
+  final String title;
+  final List<Widget> children;
+  final Widget? trailing;
+
+  /// السحب لتحت للتحديث
+  final Future<void> Function()? onRefresh;
+  final double horizontal;
+  final double bottomSpace;
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoTheme(
+      data: CupertinoThemeData(
+        brightness: Brightness.light,
+        primaryColor: AppColors.ink,
+        textTheme: CupertinoTextThemeData(
+          textStyle: ts(17),
+          navTitleTextStyle: ts(17, weight: FontWeight.w600),
+          navLargeTitleTextStyle: ts(36, color: AppColors.title, height: 1.2),
+        ),
+      ),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        slivers: [
+          CupertinoSliverNavigationBar(
+            // العنوان الكبير مساحته ثابتة في شريط آبل، فنحد تكبيره عشان ما ينقص
+            largeTitle: MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.2,
+              child: Semantics(header: true, child: Text(title, maxLines: 1)),
+            ),
+            trailing: trailing,
+            automaticallyImplyLeading: false,
+            transitionBetweenRoutes: false,
+            backgroundColor: highContrast(context) ? AppColors.bg : AppColors.bg.withValues(alpha: 0.78),
+            border: null,
+          ),
+          if (onRefresh != null) CupertinoSliverRefreshControl(onRefresh: onRefresh),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(horizontal, 8, horizontal, bottomSpace),
+            sliver: SliverList(delegate: SliverChildListDelegate(children)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// زر في قائمة الضغط المطوّل
+class PeekAction {
+  const PeekAction(this.label, this.icon, this.onTap, {this.destructive = false});
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool destructive;
+}
+
+/// الضغط المطوّل على البطاقة: معاينة مرفوعة وقائمة سريعة (مثل آبل)
+class PeekMenu extends StatelessWidget {
+  const PeekMenu({super.key, required this.child, required this.actions, this.inset = 14});
+
+  final Widget child;
+  final List<PeekAction> actions;
+
+  /// هامش البطاقة من أطراف الشاشة (عشان نعطيها عرض ثابت في المعاينة)
+  final double inset;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width - inset * 2;
+    return CupertinoContextMenu(
+      actions: [
+        for (final a in actions)
+          CupertinoContextMenuAction(
+            isDestructiveAction: a.destructive,
+            trailingIcon: a.icon,
+            onPressed: () {
+              Navigator.of(context, rootNavigator: true).pop();
+              a.onTap();
+            },
+            child: Text(a.label, style: ts(17, color: a.destructive ? AppColors.red : AppColors.ink)),
+          ),
+      ],
+      // المعاينة تحتاج عرض ثابت، والـ Material عشان الكلام ياخذ نفس الخط بدون خطوط تحته
+      child: Material(
+        type: MaterialType.transparency,
+        child: SizedBox(width: width, child: child),
+      ),
+    );
+  }
 }
 
 /// زر القلب للمفضلة (فاضي / معبّى)

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'countries.dart';
 import 'data.dart';
+import 'native.dart';
 import 'payments.dart';
 import 'services_data.dart';
 
@@ -280,6 +281,7 @@ class AppState extends ChangeNotifier {
 
   /// حذف الحساب: يمسح بيانات المستخدم ومواعيده من التطبيق
   void deleteAccount() {
+    Reminders.cancelAll();
     _accounts.remove(phone);
     _savedOrders.remove(phone);
     favDoctors.clear();
@@ -325,6 +327,8 @@ class AppState extends ChangeNotifier {
     );
     bookings.add(b);
     notifyListeners();
+    // تذكير من الجوال قبل الموعد بساعة
+    Reminders.schedule(b);
     return b;
   }
 
@@ -337,11 +341,13 @@ class AppState extends ChangeNotifier {
       ..time = time
       ..branchId = branchId ?? b.branchId;
     notifyListeners();
+    Reminders.schedule(b);
     return b;
   }
 
   void cancelBooking(String id) {
     bookings.removeWhere((b) => b.id == id);
+    Reminders.cancel(id);
     notifyListeners();
   }
 }

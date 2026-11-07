@@ -4,11 +4,13 @@ import 'package:flutter/services.dart';
 
 import '../data.dart';
 import '../main.dart';
+import '../native.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'cart_screen.dart';
+import 'service_booking_screen.dart';
 import 'service_screen.dart';
 import 'shell.dart';
 
@@ -27,7 +29,7 @@ class CartBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MediaQuery.withClampedTextScaling(
-      maxScaleFactor: 1.3,
+      maxScaleFactor: 1.6,
       child: Pressable(
         onTap: () => Navigator.of(context).push(iosRoute(const CartScreen())),
         semanticLabel: 'عرض السلة، ${ar(count)} عناصر، المجموع ${money(subtotal)}',
@@ -73,19 +75,14 @@ class ServicesTab extends StatelessWidget {
     return SafeArea(
       top: false,
       bottom: false,
-      child: ListView(
+      child: LargeTitleScroll(
+        title: 'الخدمات',
+        trailing: CartButton(count: s.cartCount, size: 40),
         // لما يطلع شريط "عرض السلة" نزيد المسافة تحت عشان ما يغطي آخر خدمة
-        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 30, 0, navBottomSpace + (s.cartCount > 0 ? cartBarSpace : 0)),
+        bottomSpace: navBottomSpace + (s.cartCount > 0 ? cartBarSpace * uiScale(context).clamp(1.0, 1.6) : 0),
         children: [
-          px(Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(child: BigTitle('الخدمات')),
-              CartButton(count: s.cartCount),
-            ],
-          )),
           px(Padding(
-            padding: const EdgeInsets.fromLTRB(6, 8, 6, 10),
+            padding: const EdgeInsets.fromLTRB(6, 0, 6, 10),
             child: Text('اختر الخدمة وأضفها للسلة، وبعدها اختر الفرع وطريقة الدفع', style: ts(15, color: AppColors.body, height: 1.7)),
           )),
           // فلترة حسب التخصص
@@ -98,7 +95,22 @@ class ServicesTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           for (final sv in list) ...[
-            px(ServiceCard(service: sv)),
+            px(PeekMenu(
+              actions: [
+                PeekAction('احجز الخدمة', CupertinoIcons.calendar, () => openServiceBooking(context, [OrderItem(sv, 1)])),
+                PeekAction('أضف إلى السلة', CupertinoIcons.bag_badge_plus, () {
+                  s.addToCart(sv.id);
+                  HapticFeedback.lightImpact();
+                }),
+                PeekAction(
+                  s.favServices.contains(sv.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة',
+                  s.favServices.contains(sv.id) ? CupertinoIcons.heart_slash : CupertinoIcons.heart,
+                  () => s.toggleFavService(sv.id),
+                ),
+                PeekAction('مشاركة', CupertinoIcons.share, () => shareText(context, shareServiceText(sv))),
+              ],
+              child: ServiceCard(service: sv),
+            )),
             const SizedBox(height: 10),
           ],
         ],
@@ -108,9 +120,10 @@ class ServicesTab extends StatelessWidget {
 }
 
 class CartButton extends StatelessWidget {
-  const CartButton({super.key, required this.count});
+  const CartButton({super.key, required this.count, this.size = 58});
 
   final int count;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -121,10 +134,10 @@ class CartButton extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: size,
+            height: size,
             decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
-            child: Icon(CupertinoIcons.bag, size: 25, color: AppColors.ink),
+            child: Icon(CupertinoIcons.bag, size: size * 0.43, color: AppColors.ink),
           ),
           if (count > 0)
             PositionedDirectional(
@@ -206,13 +219,11 @@ class _ServiceCardState extends State<ServiceCard> {
         borderRadius: BorderRadius.circular(32),
         border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ServiceImage(service: sv, size: 96),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
+      // مع الخط الكبير جداً البطاقة ترتب نفسها عمودي بدل ما يتقص الكلام
+      child: _ServiceCardLayout(
+        stacked: MediaQuery.textScalerOf(context).scale(10) > 15,
+        image: ServiceImage(service: sv, size: 96),
+        body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -306,10 +317,27 @@ class _ServiceCardState extends State<ServiceCard> {
                 ),
               ],
             ),
-          ),
-        ],
       ),
       ),
     );
   }
+}
+
+class _ServiceCardLayout extends StatelessWidget {
+  const _ServiceCardLayout({required this.stacked, required this.image, required this.body});
+
+  final bool stacked;
+  final Widget image;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) => stacked
+      ? Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [image, const SizedBox(height: 12), body],
+        )
+      : Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [image, const SizedBox(width: 14), Expanded(child: body)],
+        );
 }

@@ -44,6 +44,14 @@ ensure_ios() {
     # التطبيق فاتح دايماً (حتى لو الجوال على الوضع الداكن)
     /usr/libexec/PlistBuddy -c "Set :UIUserInterfaceStyle Light" "$plist" 2>/dev/null \
       || /usr/libexec/PlistBuddy -c "Add :UIUserInterfaceStyle string Light" "$plist"
+    # أذونات: إضافة الموعد للتقويم (نص يطلع للمستخدم وقت الطلب)
+    local cal="نضيف موعدك لتقويم جوالك مع تذكير قبله"
+    for key in NSCalendarsUsageDescription NSCalendarsWriteOnlyAccessUsageDescription NSCalendarsFullAccessUsageDescription; do
+      /usr/libexec/PlistBuddy -c "Set :$key $cal" "$plist" 2>/dev/null \
+        || /usr/libexec/PlistBuddy -c "Add :$key string $cal" "$plist"
+    done
+    /usr/libexec/PlistBuddy -c "Set :NSContactsUsageDescription يستخدمه التقويم لاقتراح العناوين" "$plist" 2>/dev/null \
+      || /usr/libexec/PlistBuddy -c "Add :NSContactsUsageDescription string يستخدمه التقويم لاقتراح العناوين" "$plist"
   fi
 }
 

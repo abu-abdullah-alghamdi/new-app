@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../data.dart';
 import '../main.dart';
+import '../native.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -99,7 +100,14 @@ class _BookingScreenState extends State<BookingScreen> {
                           style: ts(18, weight: FontWeight.w500),
                         ),
                       ),
-                      const SizedBox(width: 58),
+                      // مشاركة الطبيب بقائمة آبل الأصلية
+                      Builder(
+                        builder: (ctx) => CircleButton(
+                          icon: CupertinoIcons.share,
+                          semanticLabel: 'مشاركة الطبيب',
+                          onTap: () => shareText(ctx, shareDoctorText(d)),
+                        ),
+                      ),
                     ],
                   )),
                   if (editing != null) ...[

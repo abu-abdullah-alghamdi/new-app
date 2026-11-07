@@ -16,6 +16,15 @@ dependencies:
   shared_preferences: ^2.3.2
   # شريط التبويبات الأصلي من آبل (Liquid Glass على iOS 26)
   cupertino_native_better: ^2.3.1
+  # مشاركة طبيب أو خدمة من قائمة المشاركة الأصلية
+  share_plus: '>=11.0.0 <14.0.0'
+  # إضافة الموعد لتقويم الجوال
+  add_2_calendar: ^3.0.1
+  # تذكير من الجوال قبل الموعد بساعة
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.0
+  # السحب على الموعد (إلغاء / تعديل)
+  flutter_slidable: ^4.0.0
 
 dev_dependencies:
   flutter_test:

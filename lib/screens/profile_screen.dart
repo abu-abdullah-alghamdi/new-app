@@ -431,13 +431,7 @@ class _SelectField extends StatelessWidget {
 
 /// اختيار تاريخ الميلاد بثلاث عجلات (اليوم · الشهر · السنة) مثل آيفون
 Future<DateTime?> showBirthPicker(BuildContext context, DateTime? current) {
-  return showModalBottomSheet<DateTime>(
-    context: context,
-    backgroundColor: AppColors.white,
-    showDragHandle: true,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-    builder: (ctx) => _BirthSheet(current: current),
-  );
+  return showGlassSheet<DateTime>(context, builder: (ctx) => _BirthSheet(current: current));
 }
 
 class _BirthSheet extends StatefulWidget {
@@ -510,6 +504,7 @@ class _BirthSheetState extends State<_BirthSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
+      bottom: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 0, 22, 16),
         child: Column(
@@ -588,20 +583,37 @@ class _BirthSheetState extends State<_BirthSheet> {
 
 /// اختيار الجنسية: بحث + قائمة (السعودية أولها)
 Future<String?> showCountryPicker(BuildContext context, String current) {
+  // تفتح لنص الشاشة، وتنسحب لفوق للقائمة كاملة (مثل نوافذ آبل)
+  final sheet = DraggableScrollableController();
   return showModalBottomSheet<String>(
     context: context,
-    backgroundColor: AppColors.white,
-    showDragHandle: true,
+    backgroundColor: Colors.transparent,
+    elevation: 0,
+    barrierColor: const Color(0x33000000),
     isScrollControlled: true,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-    builder: (ctx) => _CountrySheet(current: current),
-  );
+    useSafeArea: true,
+    builder: (ctx) => DraggableScrollableSheet(
+      controller: sheet,
+      expand: false,
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.94,
+      snap: true,
+      snapSizes: const [0.55],
+      builder: (ctx, scroll) => GlassSheet(
+        fill: true,
+        child: _CountrySheet(current: current, scroll: scroll, sheet: sheet),
+      ),
+    ),
+  ).whenComplete(sheet.dispose);
 }
 
 class _CountrySheet extends StatefulWidget {
-  const _CountrySheet({required this.current});
+  const _CountrySheet({required this.current, required this.scroll, required this.sheet});
 
   final String current;
+  final ScrollController scroll;
+  final DraggableScrollableController sheet;
 
   @override
   State<_CountrySheet> createState() => _CountrySheetState();
@@ -620,11 +632,9 @@ class _CountrySheetState extends State<_CountrySheet> {
   Widget build(BuildContext context) {
     final q = searchKey(_q.text);
     final list = q.isEmpty ? countries : countries.where((c) => searchKey(c).contains(q)).toList();
-    final h = MediaQuery.sizeOf(context).height * 0.82;
-    return SizedBox(
-      height: h,
+    return SizedBox.expand(
       child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -639,6 +649,16 @@ class _CountrySheetState extends State<_CountrySheet> {
                 controller: _q,
                 style: ts(16),
                 textInputAction: TextInputAction.search,
+                // لما يبدأ يكتب نفتح النافذة كاملة عشان الكيبورد ما يغطي القائمة
+                onTap: () {
+                  if (!widget.sheet.isAttached || widget.sheet.size >= 0.9) return;
+                  final d = motion(context, 280);
+                  if (d == Duration.zero) {
+                    widget.sheet.jumpTo(0.94);
+                  } else {
+                    widget.sheet.animateTo(0.94, duration: d, curve: Curves.easeOutCubic);
+                  }
+                },
                 decoration: pillInput('ابحث عن دولة').copyWith(
                   fillColor: AppColors.bg,
                   prefixIcon: Padding(
@@ -653,8 +673,13 @@ class _CountrySheetState extends State<_CountrySheet> {
             const SizedBox(height: 8),
             Expanded(
               child: list.isEmpty
-                  ? Center(child: Text('ما لقينا دولة بهذا الاسم', style: ts(15, color: AppColors.faint)))
+                  ? ListView(
+                      controller: widget.scroll,
+                      padding: const EdgeInsets.only(top: 40),
+                      children: [Text('ما لقينا دولة بهذا الاسم', textAlign: TextAlign.center, style: ts(15, color: AppColors.faint))],
+                    )
                   : ListView.builder(
+                      controller: widget.scroll,
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                       itemCount: list.length,

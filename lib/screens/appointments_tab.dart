@@ -1,5 +1,8 @@
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data.dart';
@@ -20,7 +23,12 @@ class AppointmentsTab extends StatefulWidget {
 class _AppointmentsTabState extends State<AppointmentsTab> {
   String _filter = 'all';
   int? _day;
-  String? _cancelId;
+
+  /// السحب لتحت للتحديث (لما يتربط النظام يجيب المواعيد من السيرفر)
+  Future<void> _refresh() async {
+    HapticFeedback.mediumImpact();
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +42,15 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
     return SafeArea(
       top: false,
       bottom: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 30, 0, navBottomSpace),
+      child: LargeTitleScroll(
+        title: 'مواعيدي',
+        onRefresh: _refresh,
+        bottomSpace: navBottomSpace,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: BigTitle('${monthNames[appToday.month - 1]}\n${ar(appToday.year)}'),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+            child: Text('${monthNames[appToday.month - 1]} ${ar(appToday.year)}', style: ts(17, weight: FontWeight.w500, color: AppColors.body)),
           ),
-          const SizedBox(height: 14),
           HScroll(
             height: 106,
             children: [
@@ -54,10 +63,7 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
                     semanticLabel: DayInfo(i).full,
                     selected: _day == i,
                     dot: s.bookings.any((b) => b.dayIndex == i),
-                    onTap: () => setState(() {
-                      _day = _day == i ? null : i;
-                      _cancelId = null;
-                    }),
+                    onTap: () => setState(() => _day = _day == i ? null : i),
                   ),
                 ),
             ],
@@ -70,10 +76,7 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
                 FilterPill(
                   label: f.$2,
                   selected: _filter == f.$1,
-                  onTap: () => setState(() {
-                    _filter = f.$1;
-                    _cancelId = null;
-                  }),
+                  onTap: () => setState(() => _filter = f.$1),
                 ),
             ],
           ),
@@ -97,16 +100,31 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
           for (final b in list)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-              child: _AppointmentCard(
-                booking: b,
-                confirmingCancel: _cancelId == b.id,
-                onAskCancel: () => setState(() => _cancelId = b.id),
-                onKeep: () => setState(() => _cancelId = null),
-                onCancel: () {
-                  setState(() => _cancelId = null);
-                  s.cancelBooking(b.id);
-                },
-              ),
+              child: b.completed
+                  ? _AppointmentCard(booking: b)
+                  // اسحب البطاقة: تعديل أو إلغاء (مثل البريد والرسائل)
+                  : Slidable(
+                      key: ValueKey(b.id),
+                      endActionPane: ActionPane(
+                        motion: const DrawerMotion(),
+                        extentRatio: 0.46,
+                        children: [
+                          _SwipeAction(
+                            label: 'تعديل',
+                            icon: CupertinoIcons.calendar,
+                            color: const Color(0xFF8E8E93),
+                            onTap: () => openBooking(context, b.doctor, cat: b.cat, editing: b),
+                          ),
+                          _SwipeAction(
+                            label: 'إلغاء',
+                            icon: CupertinoIcons.trash,
+                            color: AppColors.red,
+                            onTap: () => confirmCancelBooking(context, b),
+                          ),
+                        ],
+                      ),
+                      child: _AppointmentCard(booking: b),
+                    ),
             ),
         ],
       ),
@@ -114,20 +132,58 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
   }
 }
 
+/// تأكيد إلغاء الموعد بتنبيه آبل الأصلي
+Future<void> confirmCancelBooking(BuildContext context, Booking b) async {
+  final s = AppScope.read(context);
+  final result = await CNAlert.show<String>(
+    context: context,
+    title: 'هل تريد إلغاء الموعد؟',
+    message: '${b.doctor.name} · ${b.day.full} · ${fmtTime(b.time)}',
+    actions: const [
+      CNAlertAction(label: 'تراجع', isCancel: true),
+      CNAlertAction(label: 'إلغاء الموعد', value: 'cancel', isDestructive: true),
+    ],
+  );
+  if (result?.value == 'cancel') {
+    HapticFeedback.mediumImpact();
+    s.cancelBooking(b.id);
+  }
+}
+
+/// زر يطلع لما تسحب بطاقة الموعد
+class _SwipeAction extends StatelessWidget {
+  const _SwipeAction({required this.label, required this.icon, required this.color, required this.onTap});
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => CustomSlidableAction(
+        onPressed: (_) => onTap(),
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Container(
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(40)),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 24, color: AppColors.white),
+              const SizedBox(height: 6),
+              Text(label, style: ts(15, weight: FontWeight.w500, color: AppColors.white)),
+            ],
+          ),
+        ),
+      );
+}
+
 class _AppointmentCard extends StatelessWidget {
-  const _AppointmentCard({
-    required this.booking,
-    required this.confirmingCancel,
-    required this.onAskCancel,
-    required this.onKeep,
-    required this.onCancel,
-  });
+  const _AppointmentCard({required this.booking});
 
   final Booking booking;
-  final bool confirmingCancel;
-  final VoidCallback onAskCancel;
-  final VoidCallback onKeep;
-  final VoidCallback onCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -138,25 +194,6 @@ class _AppointmentCard extends StatelessWidget {
       bottom = PillButton(
         label: 'احجز مرة ثانية',
         onTap: () => openBooking(context, d, cat: b.cat, day: firstOpenDay()),
-      );
-    } else if (confirmingCancel) {
-      bottom = Container(
-        padding: const EdgeInsets.only(top: 10),
-        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(30)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('هل تريد إلغاء الموعد؟', textAlign: TextAlign.center, style: ts(16, color: AppColors.red)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(child: PillButton(label: 'تراجع', height: 60, fontSize: 16, bg: AppColors.ink, fg: AppColors.white, onTap: onKeep)),
-                const SizedBox(width: 6),
-                Expanded(child: PillButton(label: 'نعم، ألغِه', height: 60, fontSize: 16, bg: AppColors.bg, fg: AppColors.red, onTap: onCancel)),
-              ],
-            ),
-          ],
-        ),
       );
     } else {
       bottom = Row(
@@ -179,7 +216,7 @@ class _AppointmentCard extends StatelessWidget {
             fg: AppColors.red,
             fontSize: 16,
             padding: 22,
-            onTap: onAskCancel,
+            onTap: () => confirmCancelBooking(context, b),
           ),
         ],
       );

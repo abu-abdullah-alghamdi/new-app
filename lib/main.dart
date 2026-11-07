@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'native.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/shell.dart';
 import 'state.dart';
@@ -21,6 +22,8 @@ Future<void> main() async {
     final prefs = await SharedPreferences.getInstance();
     seen = prefs.getBool(onboardingSeenKey) ?? false;
   } catch (_) {}
+  // التذكير المحلي قبل المواعيد
+  await Reminders.init();
   runApp(AreemApp(showOnboarding: !seen));
 }
 
@@ -41,6 +44,17 @@ ThemeData _theme(Brightness b) {
   final text = b == Brightness.dark ? Colors.white : Colors.black;
   return base.copyWith(
     textTheme: base.textTheme.apply(fontFamily: appFont, bodyColor: text, displayColor: text),
+    // عناصر آبل المرسومة في فلاتر (قائمة الضغط المطوّل، شريط العنوان، السحب للتحديث) بنفس الخط
+    cupertinoOverrideTheme: CupertinoThemeData(
+      brightness: Brightness.light,
+      primaryColor: AppColors.ink,
+      textTheme: CupertinoTextThemeData(
+        textStyle: ts(17),
+        actionTextStyle: ts(17),
+        navTitleTextStyle: ts(17, weight: FontWeight.w600),
+        navLargeTitleTextStyle: ts(36, color: AppColors.title, height: 1.2),
+      ),
+    ),
   );
 }
 

@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data.dart';
+import '../native.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -76,10 +78,21 @@ class _DoneScreenState extends State<DoneScreen> {
                     Text(b.title, style: ts(14, color: AppColors.body)),
                     Text(b.branch.name, style: ts(15, weight: FontWeight.w600)),
                     const SizedBox(height: 6),
-                    Text('يوصلك تذكير على واتساب قبل موعدك بيوم', style: ts(14, color: AppColors.body)),
+                    Text('يوصلك تذكير على واتساب قبل موعدك بيوم، وتنبيه من جوالك قبله بساعة', style: ts(14, color: AppColors.body)),
                   ],
                 ),
                 const Spacer(),
+                // يفتح نافذة التقويم من آبل والموعد معبّى فيها
+                PillButton(
+                  label: 'أضف إلى التقويم',
+                  icon: CupertinoIcons.calendar_badge_plus,
+                  height: 58,
+                  fontSize: 16,
+                  bg: AppColors.white,
+                  weight: FontWeight.w400,
+                  onTap: () => addBookingToCalendar(b),
+                ),
+                const SizedBox(height: 10),
                 PillButton(label: 'عرض مواعيدي', height: 66, onTap: () => _goTab(1)),
                 const SizedBox(height: 10),
                 PillButton(label: 'الرئيسية', height: 66, bg: AppColors.white, weight: FontWeight.w400, onTap: () => _goTab(0)),

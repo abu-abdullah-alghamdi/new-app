@@ -1,3 +1,4 @@
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,29 +54,18 @@ class AccountTab extends StatelessWidget {
 
   Future<void> _deleteAccount(BuildContext context) async {
     final s = AppScope.read(context);
-    final yes = await showCupertinoDialog<bool>(
+    // تنبيه آبل الأصلي (iOS 26)
+    final result = await CNAlert.show<String>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
-        title: Text('حذف الحساب؟', style: ts(17, weight: FontWeight.w600)),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text('بيتم حذف بياناتك ومواعيدك من التطبيق نهائياً، وما تقدر تتراجع', style: ts(14, height: 1.5)),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('إلغاء', style: ts(17, weight: FontWeight.w600, color: AppColors.ink)),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('حذف', style: ts(17, color: AppColors.red)),
-          ),
-        ],
-      ),
+      title: 'حذف الحساب؟',
+      message: 'بيتم حذف بياناتك ومواعيدك من التطبيق نهائياً، وما تقدر تتراجع',
+      actions: const [
+        CNAlertAction(label: 'إلغاء', isCancel: true),
+        CNAlertAction(label: 'حذف', value: 'delete', isDestructive: true),
+      ],
     );
-    if (yes == true && context.mounted) {
+    final yes = result?.value == 'delete';
+    if (yes && context.mounted) {
       s.deleteAccount();
       Navigator.of(context).popUntil((r) => r.isFirst);
     }
@@ -135,11 +125,11 @@ class AccountTab extends StatelessWidget {
     return SafeArea(
       top: false,
       bottom: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(14, MediaQuery.paddingOf(context).top + 30, 14, navBottomSpace),
+      child: LargeTitleScroll(
+        title: 'حسابي',
+        horizontal: 14,
+        bottomSpace: navBottomSpace,
         children: [
-          const BigTitle('حسابي'),
-          const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
             decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(46), boxShadow: cardShadow),
@@ -198,7 +188,13 @@ class AccountTab extends StatelessWidget {
                       onTap: () => Navigator.of(context).push(iosRoute(const OrdersScreen()))),
                 row('المفضلة', onTap: () => Navigator.of(context).push(iosRoute(const FavoritesScreen()))),
                 row('تذكير المواعيد على واتساب',
-                    trailing: AppSwitch(value: s.remindOnWhatsapp, onChanged: s.toggleRemind), onTap: s.toggleRemind),
+                    trailing: SizedBox(
+                      width: 64,
+                      height: 32,
+                      // مفتاح آبل الأصلي
+                      child: CNSwitch(value: s.remindOnWhatsapp, color: AppColors.ink, onChanged: (_) => s.toggleRemind()),
+                    ),
+                    onTap: s.toggleRemind),
                 row('تواصل مع العيادة', onTap: () => _contact(context)),
                 row('سياسة الخصوصية', divider: false, onTap: () => Navigator.of(context).push(iosRoute(const PrivacyScreen()))),
               ],

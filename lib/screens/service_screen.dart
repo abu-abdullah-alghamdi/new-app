@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../data.dart';
+import '../native.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -59,6 +60,15 @@ class _ServiceScreenState extends State<ServiceScreen> {
                     children: [
                       const BackCircle(),
                       const Spacer(),
+                      // قائمة المشاركة الأصلية من آبل
+                      Builder(
+                        builder: (ctx) => CircleButton(
+                          icon: CupertinoIcons.share,
+                          semanticLabel: 'مشاركة الخدمة',
+                          onTap: () => shareText(ctx, shareServiceText(sv)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       FavButton(
                         active: s.favServices.contains(sv.id),
                         name: sv.name,

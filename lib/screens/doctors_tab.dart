@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../data.dart';
+import '../native.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -37,11 +38,10 @@ class _DoctorsTabState extends State<DoctorsTab> {
     return SafeArea(
       top: false,
       bottom: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(0, MediaQuery.paddingOf(context).top + 30, 0, navBottomSpace),
+      child: LargeTitleScroll(
+        title: 'الأطباء',
+        bottomSpace: navBottomSpace,
         children: [
-          const Padding(padding: EdgeInsets.symmetric(horizontal: 14), child: BigTitle('ابحث\nعن طبيبك')),
-          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: TextField(
@@ -77,23 +77,35 @@ class _DoctorsTabState extends State<DoctorsTab> {
           for (final d in list)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-              child: CutCard(
-                image: d.image,
-                textWidth: 180,
-                corner: FavButton(
-                  active: s.favDoctors.contains(d.id),
-                  name: d.name,
-                  onTap: () => s.toggleFavDoctor(d.id),
-                ),
-                bottom: PillButton(label: 'احجز موعد', onTap: () => openBooking(context, d, cat: s.doctorCat)),
-                children: [
-                  Text('${d.n1}\n${d.n2}', style: ts(32, height: 1.2)),
-                  const SizedBox(height: 6),
-                  Text(d.role, style: ts(15, color: AppColors.body)),
-                  const SizedBox(height: 14),
-                  Text(d.availText, style: ts(26, color: AppColors.green)),
-                  Text('زيارة في العيادة · ${d.durationText}', style: ts(15)),
+              // الضغط المطوّل: معاينة وقائمة سريعة
+              child: PeekMenu(
+                actions: [
+                  PeekAction('احجز موعد', CupertinoIcons.calendar, () => openBooking(context, d, cat: s.doctorCat)),
+                  PeekAction(
+                    s.favDoctors.contains(d.id) ? 'إزالة من المفضلة' : 'أضف للمفضلة',
+                    s.favDoctors.contains(d.id) ? CupertinoIcons.heart_slash : CupertinoIcons.heart,
+                    () => s.toggleFavDoctor(d.id),
+                  ),
+                  PeekAction('مشاركة', CupertinoIcons.share, () => shareText(context, shareDoctorText(d))),
                 ],
+                child: CutCard(
+                  image: d.image,
+                  textWidth: 180,
+                  corner: FavButton(
+                    active: s.favDoctors.contains(d.id),
+                    name: d.name,
+                    onTap: () => s.toggleFavDoctor(d.id),
+                  ),
+                  bottom: PillButton(label: 'احجز موعد', onTap: () => openBooking(context, d, cat: s.doctorCat)),
+                  children: [
+                    Text('${d.n1}\n${d.n2}', style: ts(32, height: 1.2)),
+                    const SizedBox(height: 6),
+                    Text(d.role, style: ts(15, color: AppColors.body)),
+                    const SizedBox(height: 14),
+                    Text(d.availText, style: ts(26, color: AppColors.green)),
+                    Text('زيارة في العيادة · ${d.durationText}', style: ts(15)),
+                  ],
+                ),
               ),
             ),
         ],
