@@ -186,7 +186,7 @@ class ServerErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => StatusCard(
-        icon: CupertinoIcons.exclamationmark_icloud,
+        icon: CupertinoIcons.exclamationmark_circle,
         title: 'صار خطأ، حاول مرة ثانية',
         actions: [
           PillButton(
@@ -974,7 +974,7 @@ class NotificationsBanner extends StatelessWidget {
             const StateIcon(icon: CupertinoIcons.bell_slash, size: 40),
             const SizedBox(width: 10),
             Expanded(child: Text('التنبيهات مقفلة', style: ts(16, weight: FontWeight.w600))),
-            PillButton(
+            const PillButton(
               label: 'تفعيل',
               height: 40,
               fontSize: 14,
