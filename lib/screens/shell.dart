@@ -100,6 +100,9 @@ const navBarBottom = 0.0;
 /// ترتيب التبويبات في الشريط (من اليمين): الرئيسية، الأطباء، الخدمات، مواعيدي، حسابي
 const _order = [0, 2, 4, 1, 3];
 
+/// حجم أيقونات الشريط (مقاس تطبيقات آبل؛ الأكبر يثقل الخط ويضغط الأسماء)
+const _iconSize = 18.0;
+
 /// شريط التبويبات الأصلي من آبل (UITabBar):
 /// على iOS 26 يطلع بزجاج آبل وحركتها الأصلية، وعلى الأقدم يرجع شريط Cupertino عادي
 class GlassNavBar extends StatelessWidget {
@@ -118,18 +121,19 @@ class GlassNavBar extends StatelessWidget {
       tint: AppColors.ink,
       labelFontFamily: appFont,
       labelFontSize: 11,
+      iconSize: _iconSize,
       items: [
-        const CNTabBarItem(label: 'الرئيسية', icon: CNSymbol('house'), activeIcon: CNSymbol('house.fill')),
-        const CNTabBarItem(label: 'الأطباء', icon: CNSymbol('stethoscope'), activeIcon: CNSymbol('stethoscope')),
+        const CNTabBarItem(label: 'الرئيسية', icon: CNSymbol('house', size: _iconSize), activeIcon: CNSymbol('house.fill', size: _iconSize)),
+        const CNTabBarItem(label: 'الأطباء', icon: CNSymbol('stethoscope', size: _iconSize), activeIcon: CNSymbol('stethoscope', size: _iconSize)),
         CNTabBarItem(
           label: 'الخدمات',
-          icon: const CNSymbol('square.grid.2x2'),
-          activeIcon: const CNSymbol('square.grid.2x2.fill'),
+          icon: const CNSymbol('square.grid.2x2', size: _iconSize),
+          activeIcon: const CNSymbol('square.grid.2x2.fill', size: _iconSize),
           // نقطة صغيرة إذا فيه شي في السلة
           badge: s.cartCount > 0 ? CNTabBarItem.dotBadge : null,
         ),
-        const CNTabBarItem(label: 'مواعيدي', icon: CNSymbol('calendar'), activeIcon: CNSymbol('calendar')),
-        const CNTabBarItem(label: 'حسابي', icon: CNSymbol('person.crop.circle'), activeIcon: CNSymbol('person.crop.circle.fill')),
+        const CNTabBarItem(label: 'مواعيدي', icon: CNSymbol('calendar', size: _iconSize), activeIcon: CNSymbol('calendar', size: _iconSize)),
+        const CNTabBarItem(label: 'حسابي', icon: CNSymbol('person.crop.circle', size: _iconSize), activeIcon: CNSymbol('person.crop.circle.fill', size: _iconSize)),
       ],
     );
   }
