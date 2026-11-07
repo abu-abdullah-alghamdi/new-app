@@ -50,6 +50,7 @@ class Order {
     required this.method,
     required this.date,
     required this.reference,
+    this.cardLast4,
   });
 
   final String number;
@@ -61,7 +62,16 @@ class Order {
   final DateTime date;
   final String reference;
 
+  /// آخر 4 أرقام من البطاقة (لو الدفع ببطاقة)
+  final String? cardLast4;
+
   double get total => subtotal + vat;
+
+  /// طريقة الدفع للعرض: "مدى ···· 4821"
+  String get methodText => cardLast4 == null ? method.label : '${method.label} ···· $cardLast4';
+
+  /// مدفوع فعلاً من التطبيق (مو الدفع في العيادة)
+  bool get paidOnline => method != PayMethod.cash;
   int get count => items.fold(0, (a, b) => a + b.qty);
 }
 
@@ -162,6 +172,7 @@ class AppState extends ChangeNotifier {
     required String branchId,
     required PayMethod method,
     required String reference,
+    String? cardLast4,
     bool clearCart = false,
   }) {
     final subtotal = items.fold(0, (a, b) => a + b.total);
@@ -174,6 +185,7 @@ class AppState extends ChangeNotifier {
       method: method,
       date: DateTime.now(),
       reference: reference,
+      cardLast4: cardLast4,
     );
     orders.insert(0, o);
     if (clearCart) cart.clear();
@@ -204,7 +216,24 @@ class AppState extends ChangeNotifier {
     return list;
   }
 
-  List<Booking> get upcoming => sorted.where((b) => !b.completed).toList();
+  /// المواعيد القادمة الفعلية (بدون اللي ألغتها العيادة)
+  List<Booking> get upcoming => sorted.where((b) => !b.completed && !b.cancelledByClinic).toList();
+
+  /// الطلب اللي دُفع فيه الموعد (لو موجود)
+  Order? orderFor(Booking b) {
+    for (final o in orders) {
+      if (o.number == b.orderNumber) return o;
+    }
+    return null;
+  }
+
+  /// موعد ثاني قادم مع نفس الطبيب في نفس اليوم (للتنبيه قبل الحجز المكرر)
+  Booking? sameDayBooking(String doctorId, int day) {
+    for (final b in upcoming) {
+      if (b.doctorId == doctorId && b.dayIndex == day) return b;
+    }
+    return null;
+  }
   int get completedCount => bookings.where((b) => b.completed).length;
 
   // فلتر التخصص في صفحة الأطباء
@@ -302,6 +331,7 @@ class AppState extends ChangeNotifier {
     required int time,
     required String branchId,
     List<String> serviceIds = const [],
+    String? orderNumber,
   }) {
     final b = Booking(
       id: 'b${DateTime.now().microsecondsSinceEpoch}',
@@ -311,6 +341,7 @@ class AppState extends ChangeNotifier {
       time: time,
       branchId: branchId,
       serviceIds: serviceIds,
+      orderNumber: orderNumber,
     );
     bookings.add(b);
     notifyListeners();
@@ -330,6 +361,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     Reminders.schedule(b);
     return b;
+  }
+
+  /// العيادة ألغت الموعد (يوصل من نظام العيادة بعد الربط، وحالياً من صفحة المعاينة)
+  void cancelByClinic(String id, String reason) {
+    final b = bookings.firstWhere((x) => x.id == id);
+    b.clinicCancelReason = reason;
+    Reminders.cancel(id);
+    notifyListeners();
   }
 
   void cancelBooking(String id) {

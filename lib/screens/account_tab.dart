@@ -15,6 +15,7 @@ import 'phone_screen.dart';
 import 'privacy_screen.dart';
 import 'profile_screen.dart';
 import 'shell.dart';
+import 'states_preview_screen.dart';
 
 class AccountTab extends StatelessWidget {
   const AccountTab({super.key});
@@ -196,7 +197,10 @@ class AccountTab extends StatelessWidget {
                     ),
                     onTap: s.toggleRemind),
                 row('تواصل مع العيادة', onTap: () => _contact(context)),
-                row('سياسة الخصوصية', divider: false, onTap: () => Navigator.of(context).push(iosRoute(const PrivacyScreen()))),
+                row('سياسة الخصوصية', divider: kDebugMode, onTap: () => Navigator.of(context).push(iosRoute(const PrivacyScreen()))),
+                // نسخة التجربة بس (تختفي تلقائياً في نسخة النشر)
+                if (kDebugMode)
+                  row('معاينة الحالات', divider: false, onTap: () => Navigator.of(context).push(iosRoute(const StatesPreviewScreen()))),
               ],
             ),
           ),

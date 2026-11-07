@@ -8,6 +8,7 @@ import '../payments.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../states.dart';
 import '../widgets.dart';
 import 'done_screen.dart';
 import 'orders_screen.dart';
@@ -50,7 +51,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final _holder = TextEditingController();
   final _expiry = TextEditingController();
   final _cvv = TextEditingController();
-  bool _paying = false;
+  /// مرحلة الدفع (null = النموذج ظاهر)
+  PayPhase? _phase;
 
   int get _subtotal => widget.items.fold(0, (a, b) => a + b.total);
 
@@ -73,35 +75,65 @@ class _PaymentScreenState extends State<PaymentScreen> {
         RegExp(r'^\d{3,4}$').hasMatch(_digits(_cvv));
   }
 
+  /// آخر 4 أرقام من البطاقة (لو الدفع ببطاقة)
+  String? get _last4 {
+    if (!_method.needsCard) return null;
+    final d = _digits(_number);
+    return d.length >= 4 ? d.substring(d.length - 4) : null;
+  }
+
+  String get _methodText => _last4 == null ? _method.label : '${_method.label} ···· $_last4';
+
   Future<void> _pay() async {
-    if (!_cardOk || _paying) return;
+    if (!_cardOk || _phase != null) return;
     FocusScope.of(context).unfocus();
     final s = AppScope.read(context);
-    setState(() => _paying = true);
-    final result = await PaymentGateway.instance.pay(
-      amount: _subtotal + s.vatFor(_subtotal),
-      method: _method,
-      card: _method.needsCard
-          ? CardDetails(number: _digits(_number), holder: _holder.text.trim(), expiry: _expiry.text, cvv: _digits(_cvv))
-          : null,
-    );
-    if (!mounted) return;
-    if (!result.ok) {
-      setState(() => _paying = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.error ?? 'ما تمت عملية الدفع، حاول مرة ثانية', style: ts(14, color: AppColors.white))),
+    final amount = _subtotal + s.vatFor(_subtotal);
+    final cash = _method == PayMethod.cash;
+    var reference = '';
+
+    // الدفع في العيادة ما يمر على البوابة
+    if (!cash) {
+      setState(() => _phase = PayPhase.processing);
+      final result = await PaymentGateway.instance.pay(
+        amount: amount,
+        method: _method,
+        card: _method.needsCard
+            ? CardDetails(number: _digits(_number), holder: _holder.text.trim(), expiry: _expiry.text, cvv: _digits(_cvv))
+            : null,
       );
-      return;
+      if (!mounted) return;
+      final pause = Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 300 : 1000);
+      if (!result.ok) {
+        // الدائرة تحمر وتهتز، وبعدها صفحة الفشل
+        setState(() => _phase = PayPhase.failure);
+        await Future<void>.delayed(pause);
+        if (!mounted) return;
+        final action = await Navigator.of(context).push<PaymentFailAction>(
+          iosRoute(PaymentFailedScreen(amount: amount, methodText: _methodText)),
+        );
+        if (!mounted) return;
+        setState(() => _phase = null);
+        if (action == PaymentFailAction.retry) _pay();
+        return;
+      }
+      // الدائرة تقفل وتنرسم علامة الصح
+      setState(() => _phase = PayPhase.success);
+      await Future<void>.delayed(pause);
+      if (!mounted) return;
+      reference = result.reference ?? '';
     }
-    HapticFeedback.mediumImpact();
+
     final order = s.placeOrder(
       items: widget.items,
       branchId: widget.branchId,
       method: _method,
-      reference: result.reference ?? '',
+      reference: reference,
+      cardLast4: _last4,
       clearCart: widget.fromCart,
     );
     final a = widget.appointment;
+    final nav = Navigator.of(context);
     if (a != null) {
       // الخدمة تصير موعد في "مواعيدي"
       final b = s.addBooking(
@@ -111,10 +143,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         time: a.time,
         branchId: widget.branchId,
         serviceIds: [for (final i in widget.items) i.service.id],
+        orderNumber: order.number,
       );
-      Navigator.of(context).pushAndRemoveUntil(iosRoute(DoneScreen(booking: b)), (r) => r.isFirst);
+      nav.pushAndRemoveUntil(iosRoute(DoneScreen(booking: b, order: order)), (r) => r.isFirst);
     } else {
-      Navigator.of(context).pushAndRemoveUntil(iosRoute(OrderDoneScreen(order: order)), (r) => r.isFirst);
+      nav.pushAndRemoveUntil(iosRoute(OrderDoneScreen(order: order)), (r) => r.isFirst);
     }
   }
 
@@ -144,9 +177,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Widget build(BuildContext context) {
     final s = AppScope.of(context);
     final total = _subtotal + s.vatFor(_subtotal);
-    final payLabel = _paying
-        ? 'جاري الدفع…'
-        : (_method == PayMethod.cash ? 'تأكيد الطلب · ${money(total)}' : 'ادفع ${money(total)}');
+    final payLabel = _method == PayMethod.cash ? 'تأكيد الطلب · ${money(total)}' : 'ادفع ${money(total)}';
+
+    // وقت الدفع: الصفحة كلها تصير حركة التحقق، وما يقدر يرجع لين تخلص
+    final phase = _phase;
+    if (phase != null) {
+      return PopScope(
+        canPop: false,
+        child: Scaffold(body: SafeArea(child: PaymentProgressView(phase: phase, amount: total, methodText: _methodText))),
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -246,7 +286,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               ),
             ),
             BottomAction(
-              child: _method == PayMethod.applePay && !_paying
+              child: _method == PayMethod.applePay
                   ? PillButton(
                       label: 'الدفع عبر Apple Pay',
                       icon: Icons.apple,
@@ -255,7 +295,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       fg: AppColors.white,
                       onTap: _pay,
                     )
-                  : PillButton(label: payLabel, height: 66, fontSize: 17, enabled: _cardOk && !_paying, onTap: _pay),
+                  : PillButton(label: payLabel, height: 66, fontSize: 17, enabled: _cardOk, onTap: _pay),
             ),
           ],
         ),

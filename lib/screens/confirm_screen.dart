@@ -5,13 +5,15 @@ import '../main.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../states.dart';
 import '../widgets.dart';
+import 'booking_screen.dart';
 import 'done_screen.dart';
 import 'login_gate.dart';
 import 'payment_screen.dart';
 
 /// تأكيد الحجز: ملخص الموعد وزر واحد (بدون أي خانات؛ بيانات المستخدم من ملفه)
-class ConfirmScreen extends StatelessWidget {
+class ConfirmScreen extends StatefulWidget {
   const ConfirmScreen({
     super.key,
     required this.doctor,
@@ -33,10 +35,49 @@ class ConfirmScreen extends StatelessWidget {
   final List<OrderItem> items;
   final bool fromCart;
 
-  Future<void> _confirm(BuildContext context) async {
+  @override
+  State<ConfirmScreen> createState() => _ConfirmScreenState();
+}
+
+class _ConfirmScreenState extends State<ConfirmScreen> {
+  /// الوقت ممكن يتغير لو انحجز قبل ما يأكد
+  late int time = widget.time;
+
+  Doctor get doctor => widget.doctor;
+  String get cat => widget.cat;
+  int get day => widget.day;
+  String get branchId => widget.branchId;
+  List<OrderItem> get items => widget.items;
+  bool get fromCart => widget.fromCart;
+
+  Future<void> _confirm() async {
     // قاعدة وحدة: الحجز يحتاج جوال موثّق
     if (!await requireLogin(context)) return;
-    if (!context.mounted) return;
+    if (!mounted) return;
+    final s = AppScope.read(context);
+
+    // الوقت انحجز قبل ما يأكد (يصير فعلياً بعد ربط السيرفر)
+    if (slotTaken(doctor.id, day, slotTimes.indexOf(time))) {
+      final picked = await showSlotTakenSheet(context, doctorId: doctor.id, day: day, time: time);
+      if (picked == null || !mounted) return;
+      setState(() => time = picked);
+    }
+    if (!mounted) return;
+
+    // حجز مكرر مع نفس الطبيب في نفس اليوم
+    final existing = s.sameDayBooking(doctor.id, day);
+    if (existing != null) {
+      final choice = await showDuplicateSheet(context, existing: existing, newTime: time);
+      if (choice == null || !mounted) return;
+      if (choice == DuplicateChoice.editExisting) {
+        final nav = Navigator.of(context);
+        nav.popUntil((r) => r.isFirst);
+        nav.push(iosModal(BookingScreen(doctor: existing.doctor, cat: existing.cat, editing: existing)));
+        return;
+      }
+    }
+    if (!mounted) return;
+
     final nav = Navigator.of(context);
     if (items.isNotEmpty) {
       nav.push(iosRoute(PaymentScreen(
@@ -47,7 +88,7 @@ class ConfirmScreen extends StatelessWidget {
       )));
       return;
     }
-    final b = AppScope.read(context).addBooking(doctorId: doctor.id, cat: cat, day: day, time: time, branchId: branchId);
+    final b = s.addBooking(doctorId: doctor.id, cat: cat, day: day, time: time, branchId: branchId);
     nav.pushReplacement(iosRoute(DoneScreen(booking: b)));
   }
 
@@ -114,7 +155,7 @@ class ConfirmScreen extends StatelessWidget {
               child: PillButton(
                 label: items.isNotEmpty ? 'متابعة للدفع' : 'تأكيد الحجز',
                 height: 66,
-                onTap: () => _confirm(context),
+                onTap: _confirm,
               ),
             ),
           ],

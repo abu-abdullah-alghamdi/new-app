@@ -255,6 +255,7 @@ class CutCard extends StatelessWidget {
     this.radius = 46,
     this.shadow = true,
     this.corner,
+    this.borderColor,
   });
 
   /// زر صغير في الزاوية العلوية (مثل قلب المفضلة)
@@ -270,6 +271,9 @@ class CutCard extends StatelessWidget {
   final double radius;
   final bool shadow;
 
+  /// حد ملوّن حول البطاقة (مثل الموعد اللي ألغته العيادة)
+  final Color? borderColor;
+
   @override
   Widget build(BuildContext context) {
     // مع تكبير الخط، نوسّع عمود النص ونصغّر الصورة عشان ما يتداخلون
@@ -282,7 +286,9 @@ class CutCard extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(radius),
         boxShadow: shadow ? cardShadow : null,
-        border: highContrast(context) ? Border.all(color: AppColors.ink, width: 1.5) : null,
+        border: highContrast(context)
+            ? Border.all(color: AppColors.ink, width: 1.5)
+            : (borderColor == null ? null : Border.all(color: borderColor!, width: 2)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(

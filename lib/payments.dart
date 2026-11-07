@@ -57,7 +57,8 @@ abstract class PaymentGateway {
   Future<PaymentResult> pay({required double amount, required PayMethod method, CardDetails? card});
 }
 
-/// بوابة شكلية: تنتظر ثانيتين وترجع نجاح، وما تحفظ ولا ترسل بيانات البطاقة
+/// بوابة شكلية: تنتظر ثانيتين وترجع نجاح، وما تحفظ ولا ترسل بيانات البطاقة.
+/// للتجربة: أي بطاقة رقمها ينتهي بـ 0002 ترجع فشل
 class MockPaymentGateway implements PaymentGateway {
   @override
   bool get isDemo => true;
@@ -65,6 +66,7 @@ class MockPaymentGateway implements PaymentGateway {
   @override
   Future<PaymentResult> pay({required double amount, required PayMethod method, CardDetails? card}) async {
     await Future<void>.delayed(const Duration(seconds: 2));
+    if (card != null && card.number.endsWith('0002')) return const PaymentResult.failure('رفض البنك العملية');
     return PaymentResult.success('DEMO-${DateTime.now().millisecondsSinceEpoch}');
   }
 }

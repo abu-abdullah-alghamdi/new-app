@@ -1,4 +1,3 @@
-import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,8 +5,10 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../data.dart';
+import '../native.dart';
 import '../services_data.dart';
 import '../state.dart';
+import '../states.dart';
 import '../theme.dart';
 import '../widgets.dart';
 import 'booking_screen.dart';
@@ -23,6 +24,9 @@ class AppointmentsTab extends StatefulWidget {
 class _AppointmentsTabState extends State<AppointmentsTab> {
   String _filter = 'all';
   int? _day;
+
+  /// المستخدم قفل تنبيه "التنبيهات مقفلة" (يرجع مع فتح التطبيق مرة ثانية)
+  bool _bannerClosed = false;
 
   /// السحب لتحت للتحديث (لما يتربط النظام يجيب المواعيد من السيرفر)
   Future<void> _refresh() async {
@@ -47,6 +51,16 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
         onRefresh: _refresh,
         bottomSpace: navBottomSpace,
         children: [
+          // التنبيهات مقفلة: يطلع بس لو عنده موعد قادم
+          ValueListenableBuilder<bool>(
+            valueListenable: Reminders.blocked,
+            builder: (context, blocked, _) => blocked && !_bannerClosed && s.upcoming.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                    child: NotificationsBanner(onClose: () => setState(() => _bannerClosed = true)),
+                  )
+                : const SizedBox.shrink(),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: Text('${monthNames[appToday.month - 1]} ${fmtNum(appToday.year)}', style: ts(17, weight: FontWeight.w500, color: AppColors.body)),
@@ -83,24 +97,29 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
           if (list.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
-                decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(46)),
-                child: Column(
-                  children: [
-                    Text('لا توجد مواعيد هنا', style: ts(22)),
-                    const SizedBox(height: 8),
-                    Text('غيّر اليوم أو الفلتر، أو احجز موعد جديد', textAlign: TextAlign.center, style: ts(14, color: AppColors.body)),
-                    const SizedBox(height: 14),
-                    PillButton(label: 'احجز موعد', height: 60, fontSize: 17, onTap: () => s.openDoctors()),
-                  ],
-                ),
+              child: StatusCard(
+                icon: CupertinoIcons.calendar,
+                iconBg: AppColors.lime,
+                title: _emptyTitle(),
+                subtitle: _day == null && _filter != 'completed' ? 'احجز موعدك مع أطبائنا بخطوات بسيطة، ويوصلك تذكير قبل الموعد' : null,
+                actions: [
+                  PillButton(label: 'احجز موعد', height: 60, fontSize: 17, onTap: () => s.openDoctors()),
+                  const SizedBox(height: 6),
+                  PillButton(
+                    label: 'تصفح الخدمات',
+                    height: 50,
+                    fontSize: 15,
+                    weight: FontWeight.w400,
+                    bg: Colors.transparent,
+                    onTap: () => s.openServices(),
+                  ),
+                ],
               ),
             ),
           for (final b in list)
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-              child: b.completed
+              child: b.completed || b.cancelledByClinic
                   ? _AppointmentCard(booking: b)
                   // اسحب البطاقة: تعديل أو إلغاء (مثل البريد والرسائل)
                   : Slidable(
@@ -130,23 +149,11 @@ class _AppointmentsTabState extends State<AppointmentsTab> {
       ),
     );
   }
-}
 
-/// تأكيد إلغاء الموعد بتنبيه آبل الأصلي
-Future<void> confirmCancelBooking(BuildContext context, Booking b) async {
-  final s = AppScope.read(context);
-  final result = await CNAlert.show<String>(
-    context: context,
-    title: 'هل تريد إلغاء الموعد؟',
-    message: '${b.doctor.name} · ${b.day.full} · ${fmtTime(b.time)}',
-    actions: const [
-      CNAlertAction(label: 'تراجع', isCancel: true),
-      CNAlertAction(label: 'إلغاء الموعد', value: 'cancel', isDestructive: true),
-    ],
-  );
-  if (result?.value == 'cancel') {
-    HapticFeedback.mediumImpact();
-    s.cancelBooking(b.id);
+  /// عنوان الحالة الفاضية حسب اليوم والفلتر
+  String _emptyTitle() {
+    if (_day != null) return 'ما عندك مواعيد ${dayPhrase(_day!)}';
+    return _filter == 'completed' ? 'ما عندك زيارات مكتملة' : 'ما عندك مواعيد قادمة';
   }
 }
 
@@ -189,6 +196,7 @@ class _AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final b = booking;
     final d = b.doctor;
+    if (b.cancelledByClinic) return _CancelledCard(booking: b);
     Widget bottom;
     if (b.completed) {
       bottom = PillButton(
@@ -237,6 +245,71 @@ class _AppointmentCard extends StatelessWidget {
         Text(b.range, style: ts(15)),
         const SizedBox(height: 4),
         Text(b.branch.name, style: ts(15, weight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+/// موعد ألغته العيادة: شارة واضحة، السبب، وطريقة الحجز من جديد
+class _CancelledCard extends StatelessWidget {
+  const _CancelledCard({required this.booking});
+
+  final Booking booking;
+
+  @override
+  Widget build(BuildContext context) {
+    final b = booking;
+    final d = b.doctor;
+    final s = AppScope.of(context);
+    final paid = s.orderFor(b)?.paidOnline ?? false;
+    return CutCard(
+      image: d.image,
+      imageHeight: 236,
+      imageWidth: 170,
+      borderColor: const Color(0xFFF3C7C2),
+      bottom: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(color: AppColors.bg, borderRadius: BorderRadius.circular(20)),
+            child: Text(
+              paid ? '${b.clinicCancelReason}، والمبلغ يرجع لك كامل' : b.clinicCancelReason!,
+              style: ts(14, color: AppColors.body, height: 1.6),
+            ),
+          ),
+          const SizedBox(height: 12),
+          PillButton(
+            label: 'احجز موعد جديد مع ${d.n1}',
+            height: 58,
+            fontSize: 16,
+            onTap: () => openBooking(context, d, cat: b.cat),
+          ),
+          PillButton(
+            label: 'اختر طبيب ثاني',
+            height: 48,
+            fontSize: 15,
+            weight: FontWeight.w400,
+            bg: Colors.transparent,
+            onTap: () => s.openDoctors(b.cat),
+          ),
+        ],
+      ),
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+          decoration: BoxDecoration(color: const Color(0xFFFBE3E1), borderRadius: BorderRadius.circular(999)),
+          child: Text('ألغته العيادة', style: ts(13, weight: FontWeight.w600, color: AppColors.red)),
+        ),
+        const SizedBox(height: 12),
+        Text('${d.n1}\n${d.n2}', style: ts(30, height: 1.2)),
+        const SizedBox(height: 4),
+        Text('${b.title} · ${b.branch.name}', style: ts(15, color: AppColors.body)),
+        const SizedBox(height: 10),
+        Text(
+          '${b.day.full} · ${fmtTime(b.time)}',
+          style: ts(18, color: AppColors.closedText, decoration: TextDecoration.lineThrough),
+        ),
       ],
     );
   }

@@ -6,6 +6,7 @@ import '../main.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../states.dart';
 import '../widgets.dart';
 import 'booking_screen.dart';
 import 'confirm_screen.dart';
@@ -162,6 +163,23 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     }),
                   ),
                     _title('الوقت'),
+                    // اليوم كله محجوز عند الطبيب المختار: نقترح أقرب موعد
+                    if (_doctor != null && _day != null && List.generate(slotTimes.length, _taken).every((t) => t))
+                      px(NoSlotsCard(
+                        doctor: doctorById(_doctor!),
+                        day: _day!,
+                        nearest: nearestOpenSlot(_doctor!, _day! + 1),
+                        onBook: () {
+                          final n = nearestOpenSlot(_doctor!, _day! + 1);
+                          if (n == null) return;
+                          setState(() {
+                            _day = n.day;
+                            _time = n.time;
+                          });
+                          _continue();
+                        },
+                      ))
+                    else
                     px(Wrap(
                       spacing: 8,
                       runSpacing: 8,

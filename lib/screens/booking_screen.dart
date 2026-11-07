@@ -7,6 +7,7 @@ import '../native.dart';
 import '../services_data.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../states.dart';
 import '../widgets.dart';
 import 'confirm_screen.dart';
 import 'done_screen.dart';
@@ -194,11 +195,31 @@ class _BookingScreenState extends State<BookingScreen> {
                       children: [
                         Text('الأوقات المتاحة', style: ts(20, weight: FontWeight.w500)),
                         const Spacer(),
-                        if (_day != null) Text('${fmtNum(freeCount)} أوقات', style: ts(14, color: AppColors.body)),
+                        if (_day != null)
+                          freeCount == 0
+                              ? Text('كلها محجوزة', style: ts(14, color: AppColors.red))
+                              : Text('${fmtNum(freeCount)} أوقات', style: ts(14, color: AppColors.body)),
                       ],
                     ),
                   )),
                   const SizedBox(height: 12),
+                  // اليوم كله محجوز: نقترح أقرب موعد بدل ما يدور
+                  if (_day != null && freeCount == 0)
+                    px(NoSlotsCard(
+                      doctor: d,
+                      day: _day!,
+                      nearest: nearestOpenSlot(d.id, _day! + 1),
+                      onBook: () {
+                        final n = nearestOpenSlot(d.id, _day! + 1);
+                        if (n == null) return;
+                        setState(() {
+                          _day = n.day;
+                          _time = n.time;
+                        });
+                        _continue();
+                      },
+                    ))
+                  else
                   px(Wrap(
                     spacing: 8,
                     runSpacing: 8,

@@ -65,6 +65,21 @@ String fmtTime(int minutesAfter4pm) {
   return '${fmtNum(h)}:${fmtNum(mm)} م';
 }
 
+/// الساعة من تاريخ فعلي: "4:58 م"
+String fmtClock(DateTime t) {
+  final h = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  return '${fmtNum(h)}:${t.minute.toString().padLeft(2, '0')} ${t.hour < 12 ? 'ص' : 'م'}';
+}
+
+/// مدة متبقية مختصرة: "ساعة و 20 دقيقة"، "45 دقيقة"
+String fmtRemaining(Duration d) {
+  final h = d.inHours;
+  final m = d.inMinutes % 60;
+  final hours = h == 1 ? 'ساعة' : (h == 2 ? 'ساعتين' : '${fmtNum(h)} ساعات');
+  if (h == 0) return '${fmtNum(m)} دقيقة';
+  return m == 0 ? hours : '$hours و ${fmtNum(m)} دقيقة';
+}
+
 String fmtRange(int start, int duration) => 'من ${fmtTime(start)} إلى ${fmtTime(start + duration)}';
 
 const slotTimes = [0, 30, 60, 90, 120, 150, 180, 210, 240];
@@ -214,8 +229,12 @@ const doctors = [
 
 Doctor doctorById(String id) => doctors.firstWhere((d) => d.id == id, orElse: () => doctors.first);
 
+/// يوم تجريبي محجوز بالكامل عند د. فهد (ثاني يوم دوام بعد اليوم) عشان تبان حالة "ما فيه أوقات"
+int get fullyBookedDemoDay => firstOpenDay(fromToday: false) + 1 + (DayInfo(firstOpenDay(fromToday: false) + 1).closed ? 1 : 0);
+
 /// هل الوقت محجوز؟ (بيانات تجريبية ثابتة لكل طبيب ويوم)
 bool slotTaken(String doctorId, int day, int index) {
+  if (doctorId == 'd2' && day == fullyBookedDemoDay) return true;
   final seed = doctorId.codeUnitAt(1);
   return (index * 7 + (day + 1) * 3 + seed) % 4 == 0;
 }
@@ -229,6 +248,7 @@ class Booking {
     required this.time,
     this.branchId = 'rawdah',
     this.serviceIds = const [],
+    this.orderNumber,
   });
 
   final String id;
@@ -242,6 +262,14 @@ class Booking {
 
   /// الخدمات المحجوزة (فاضية = استشارة/زيارة عادية)
   final List<String> serviceIds;
+
+  /// رقم الطلب لو الموعد مدفوع من التطبيق
+  final String? orderNumber;
+
+  /// سبب الإلغاء لو العيادة ألغت الموعد (يوصل من نظام العيادة بعد الربط)
+  String? clinicCancelReason;
+
+  bool get cancelledByClinic => clinicCancelReason != null;
 
   Doctor get doctor => doctorById(doctorId);
   DayInfo get day => DayInfo(dayIndex);

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -213,7 +214,20 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                   ),
                   const SizedBox(height: 14),
                   if (_error)
-                    Text('الرمز غير صحيح، حاول مرة ثانية', textAlign: TextAlign.center, style: ts(14, color: AppColors.red)),
+                    Semantics(
+                      liveRegion: true,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(22)),
+                        child: Row(
+                          children: [
+                            const Icon(CupertinoIcons.exclamationmark_triangle, size: 22, color: AppColors.red),
+                            const SizedBox(width: 10),
+                            Text('الرمز غير صحيح', style: ts(16, weight: FontWeight.w600, color: AppColors.red)),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (_ok)
                     Text('تم التحقق', textAlign: TextAlign.center, style: ts(14, color: AppColors.green)),
                   const SizedBox(height: 6),

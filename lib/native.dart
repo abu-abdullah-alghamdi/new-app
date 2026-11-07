@@ -5,8 +5,11 @@ import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+
+import 'package:url_launcher/url_launcher.dart';
 
 import 'data.dart';
 import 'services_data.dart';
@@ -42,11 +45,12 @@ String shareServiceText(Service s) {
   return '${s.name}$offer · ${s.priceText}\n${s.availabilityText}\nاحجزها من تطبيق عيادتي\n$appShareLink';
 }
 
-/// يفتح نافذة التقويم من آبل والموعد معبّى فيها (مع تذكير قبله بساعة)
-Future<void> addBookingToCalendar(Booking b) async {
+/// يفتح نافذة التقويم من آبل والموعد معبّى فيها (مع تذكير قبله بساعة).
+/// يرجّع false لو الوصول للتقويم مقفل
+Future<bool> addBookingToCalendar(Booking b) async {
   final branch = b.branch;
   try {
-    await Add2Calendar.addEvent2Cal(Event(
+    return await Add2Calendar.addEvent2Cal(Event(
       title: '${b.title} مع ${b.doctor.name}',
       description: 'موعد في عيادتي',
       location: '${branch.name}، ${branch.area}',
@@ -54,6 +58,15 @@ Future<void> addBookingToCalendar(Booking b) async {
       endDate: bookingEnd(b),
       iosParams: const IOSParams(reminder: Duration(hours: 1)),
     ));
+  } catch (_) {
+    return false;
+  }
+}
+
+/// يفتح إعدادات التطبيق في الجوال (للتنبيهات والتقويم)
+Future<void> openAppSettings() async {
+  try {
+    await launchUrl(Uri.parse('app-settings:'));
   } catch (_) {}
 }
 
@@ -63,6 +76,14 @@ class Reminders {
 
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
+  static AppLifecycleListener? _lifecycle;
+  static const _askedKey = 'notifications_asked';
+
+  /// true لو المستخدم قفل التنبيهات بعد ما سألناه (يطلع تنبيه في "مواعيدي")
+  static final blocked = ValueNotifier<bool>(false);
+
+  static IOSFlutterLocalNotificationsPlugin? get _ios =>
+      _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
 
   static Future<void> init() async {
     try {
@@ -77,9 +98,23 @@ class Reminders {
         ),
       ));
       _ready = true;
+      // لو رجع من الإعدادات بعد ما فعّلها، يختفي التنبيه
+      _lifecycle ??= AppLifecycleListener(onResume: refreshStatus);
+      await refreshStatus();
     } catch (_) {
       _ready = false;
     }
+  }
+
+  /// يحدّث حالة التنبيهات (مقفلة أو لا) بدون ما يسأل المستخدم
+  static Future<void> refreshStatus() async {
+    if (!_ready) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!(prefs.getBool(_askedKey) ?? false)) return;
+      final options = await _ios?.checkPermissions();
+      blocked.value = !(options?.isEnabled ?? true);
+    } catch (_) {}
   }
 
   static int _id(String bookingId) => bookingId.hashCode & 0x7fffffff;
@@ -88,9 +123,10 @@ class Reminders {
   static Future<void> requestPermission() async {
     if (!_ready) return;
     try {
-      await _plugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(alert: true, badge: true, sound: true);
+      final granted = await _ios?.requestPermissions(alert: true, badge: true, sound: true);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_askedKey, true);
+      blocked.value = granted == false;
     } catch (_) {}
   }
 

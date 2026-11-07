@@ -9,6 +9,7 @@ import 'native.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/shell.dart';
 import 'state.dart';
+import 'states.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -62,6 +63,14 @@ class AreemApp extends StatelessWidget {
 
   final bool showOnboarding;
 
+  /// التحديث الإجباري والصيانة يسبقون كل شي (يتحددون من السيرفر بعد الربط)
+  Widget _home() {
+    if (RemoteConfig.updateRequired) return const ForceUpdatePage();
+    final until = RemoteConfig.maintenanceUntil;
+    if (until != null) return MaintenancePage(backAt: until);
+    return showOnboarding ? const OnboardingScreen() : const MainShell();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScope(
@@ -88,7 +97,7 @@ class AreemApp extends StatelessWidget {
           ),
         ),
         // يتصفح على طول؛ التسجيل يطلب لما يحجز أو يدفع
-        home: showOnboarding ? const OnboardingScreen() : const MainShell(),
+        home: _home(),
       ),
     );
   }
