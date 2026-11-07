@@ -1,3 +1,4 @@
+import 'package:cupertino_native_better/cupertino_native_better.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -53,6 +54,8 @@ class AreemApp extends StatelessWidget {
     return AppScope(
       state: appState,
       child: MaterialApp(
+        // يخفي شريط آبل وقت النوافذ والصفحات اللي تطلع فوقه
+        navigatorObservers: [CNTabBarRouteObserver()],
         title: 'عيادتي',
         debugShowCheckedModeBanner: false,
         locale: const Locale('ar'),

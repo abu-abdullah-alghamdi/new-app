@@ -12,6 +12,7 @@
 2. **Flutter**: من flutter.dev (أو `brew install --cask flutter`).
 3. **CocoaPods**: `brew install cocoapods`
 4. تأكد إن كل شي جاهز: `flutter doctor`
+5. نسخة Flutter لازم تكون 3.35 أو أحدث (شريط التبويبات الأصلي من آبل يحتاجها)، و Xcode 26 أو أحدث. للتحديث: `flutter upgrade`
 
 ## التشغيل على Xcode
 
