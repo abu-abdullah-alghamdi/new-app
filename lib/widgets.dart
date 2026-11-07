@@ -484,7 +484,7 @@ InputDecoration pillInput(String hint) => InputDecoration(
       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(999),
-        borderSide: BorderSide(color: AppColors.ink, width: 2),
+        borderSide: const BorderSide(color: AppColors.ink, width: 2),
       ),
     );
 
@@ -749,7 +749,7 @@ class AmountSummary extends StatelessWidget {
               ? [
                   amountRow('المجموع', money(subtotal)),
                   amountRow('ضريبة القيمة المضافة (${fmtNum((vatRate * 100).round())}%)', money(vat)),
-                  Divider(color: AppColors.bg, height: 18, thickness: 1.5),
+                  const Divider(color: AppColors.bg, height: 18, thickness: 1.5),
                   amountRow('الإجمالي', money(subtotal + vat), bold: true),
                 ]
               // المواطن السعودي (والزائر قبل التسجيل): الإجمالي بس

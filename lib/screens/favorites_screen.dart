@@ -54,8 +54,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               Container(
                 width: 96,
                 height: 96,
-                decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
-                child: Icon(CupertinoIcons.heart, size: 40, color: AppColors.faint),
+                decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+                child: const Icon(CupertinoIcons.heart, size: 40, color: AppColors.faint),
               ),
               const SizedBox(height: 16),
               Text('ما أضفت شيئاً للمفضلة حتى الآن', style: ts(21)),

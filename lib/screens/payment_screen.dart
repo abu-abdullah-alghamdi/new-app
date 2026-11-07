@@ -170,7 +170,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(CupertinoIcons.info_circle_fill, size: 22, color: AppColors.ink),
+                          const Icon(CupertinoIcons.info_circle_fill, size: 22, color: AppColors.ink),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -190,7 +190,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(CupertinoIcons.location_solid, size: 16, color: AppColors.faint),
+                            const Icon(CupertinoIcons.location_solid, size: 16, color: AppColors.faint),
                             const SizedBox(width: 6),
                             Text(branchById(widget.branchId).name, style: ts(15, weight: FontWeight.w600)),
                           ],
@@ -290,7 +290,7 @@ class _MethodTile extends StatelessWidget {
               Container(
                 width: 46,
                 height: 46,
-                decoration: BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
+                decoration: const BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
                 child: Icon(payIcon(method), size: 24, color: AppColors.ink),
               ),
               const SizedBox(width: 12),

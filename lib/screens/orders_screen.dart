@@ -52,7 +52,7 @@ class OrderCard extends StatelessWidget {
           for (final it in order.items)
             amountRow('${it.service.name}${it.qty > 1 ? ' × ${fmtNum(it.qty)}' : ''}', money(it.total)),
           amountRow('ضريبة القيمة المضافة', money(order.vat)),
-          Divider(color: AppColors.bg, height: 16, thickness: 1.5),
+          const Divider(color: AppColors.bg, height: 16, thickness: 1.5),
           amountRow('الإجمالي', money(order.total), bold: true),
         ],
       ),
@@ -81,7 +81,7 @@ class OrdersScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 50),
                 child: Column(
                   children: [
-                    Icon(CupertinoIcons.doc_text, size: 44, color: AppColors.faint),
+                    const Icon(CupertinoIcons.doc_text, size: 44, color: AppColors.faint),
                     const SizedBox(height: 12),
                     Text('ما عندك طلبات حتى الآن', style: ts(20)),
                     const SizedBox(height: 6),

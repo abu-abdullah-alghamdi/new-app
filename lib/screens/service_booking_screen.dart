@@ -114,7 +114,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                             ),
                           ),
                         if (widget.items.length > 1) ...[
-                          Divider(color: AppColors.bg, height: 14, thickness: 1.5),
+                          const Divider(color: AppColors.bg, height: 14, thickness: 1.5),
                           amountRow('المجموع', money(subtotal), bold: true),
                         ],
                       ],

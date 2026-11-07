@@ -136,7 +136,7 @@ class CartButton extends StatelessWidget {
           Container(
             width: size,
             height: size,
-            decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
             child: Icon(CupertinoIcons.bag, size: size * 0.43, color: AppColors.ink),
           ),
           if (count > 0)

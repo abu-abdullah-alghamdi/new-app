@@ -50,7 +50,7 @@ class _DoctorsTabState extends State<DoctorsTab> {
               textInputAction: TextInputAction.search,
               onChanged: (_) => setState(() {}),
               decoration: pillInput('اسم الطبيب أو التخصص').copyWith(
-                prefixIcon: Padding(
+                prefixIcon: const Padding(
                   padding: EdgeInsetsDirectional.only(start: 20, end: 8),
                   child: Icon(CupertinoIcons.search, color: AppColors.ink),
                 ),

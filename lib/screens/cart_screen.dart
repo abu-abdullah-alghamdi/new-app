@@ -86,8 +86,8 @@ class _Empty extends StatelessWidget {
             Container(
               width: 96,
               height: 96,
-              decoration: BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
-              child: Icon(CupertinoIcons.bag, size: 42, color: AppColors.faint),
+              decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+              child: const Icon(CupertinoIcons.bag, size: 42, color: AppColors.faint),
             ),
             const SizedBox(height: 18),
             Text('السلة فاضية', style: ts(24)),

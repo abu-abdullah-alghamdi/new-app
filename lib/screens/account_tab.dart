@@ -87,12 +87,12 @@ class AccountTab extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 60),
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              border: divider ? Border(bottom: BorderSide(color: AppColors.bg)) : null,
+              border: divider ? const Border(bottom: BorderSide(color: AppColors.bg)) : null,
             ),
             child: Row(
               children: [
                 Expanded(child: Text(label, style: ts(17, color: color))),
-                trailing ?? Icon(CupertinoIcons.forward, size: 18, color: AppColors.faint),
+                trailing ?? const Icon(CupertinoIcons.forward, size: 18, color: AppColors.faint),
               ],
             ),
           ),
@@ -182,7 +182,7 @@ class AccountTab extends StatelessWidget {
                         children: [
                           if (s.orders.isNotEmpty) Text(fmtNum(s.orders.length), style: ts(16, color: AppColors.faint)),
                           const SizedBox(width: 6),
-                          Icon(CupertinoIcons.forward, size: 18, color: AppColors.faint),
+                          const Icon(CupertinoIcons.forward, size: 18, color: AppColors.faint),
                         ],
                       ),
                       onTap: () => Navigator.of(context).push(iosRoute(const OrdersScreen()))),

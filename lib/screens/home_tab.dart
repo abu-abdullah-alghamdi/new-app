@@ -152,8 +152,8 @@ class _NextAppointmentPill extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
-              child: Icon(CupertinoIcons.forward, size: 18, color: AppColors.ink),
+              decoration: const BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
+              child: const Icon(CupertinoIcons.forward, size: 18, color: AppColors.ink),
             ),
           ],
         ),
@@ -205,6 +205,8 @@ class _BannerCarouselState extends State<_BannerCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    // البديل الجديد (valuesOf) مو موجود في نسخ Flutter الأقدم
+    // ignore: deprecated_member_use
     _visible = TickerMode.of(context);
     final h = 262 * uiScale(context);
     return Column(

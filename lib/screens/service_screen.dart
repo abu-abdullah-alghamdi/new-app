@@ -289,7 +289,7 @@ class ReviewCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: r.anonymous
-                        ? Icon(CupertinoIcons.person_fill, size: 20, color: AppColors.faint)
+                        ? const Icon(CupertinoIcons.person_fill, size: 20, color: AppColors.faint)
                         : Text(r.name!.characters.first, style: ts(17, weight: FontWeight.w600, color: AppColors.onAccent)),
                   ),
                   const SizedBox(width: 10),

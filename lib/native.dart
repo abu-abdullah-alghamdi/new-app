@@ -52,7 +52,7 @@ Future<void> addBookingToCalendar(Booking b) async {
       location: '${branch.name}، ${branch.area}',
       startDate: bookingStart(b),
       endDate: bookingEnd(b),
-      iosParams: IOSParams(reminder: const Duration(hours: 1)),
+      iosParams: const IOSParams(reminder: Duration(hours: 1)),
     ));
   } catch (_) {}
 }

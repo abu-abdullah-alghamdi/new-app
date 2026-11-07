@@ -225,7 +225,7 @@ class _OtpScreenState extends State<OtpScreen> with SingleTickerProviderStateMix
                               TextSpan(children: [
                                 const TextSpan(text: 'إعادة الإرسال بعد '),
                                 TextSpan(
-                                  text: '⁦0:${fmtNum(_left.toString().padLeft(2, '0'))}⁩',
+                                  text: '\u{2066}0:${fmtNum(_left.toString().padLeft(2, '0'))}\u{2069}',
                                   style: ts(14, weight: FontWeight.w600),
                                 ),
                               ]),

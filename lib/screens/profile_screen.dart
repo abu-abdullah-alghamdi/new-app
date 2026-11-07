@@ -261,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: ts(17, color: AppColors.body),
                               ),
                             ),
-                            Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: AppColors.green),
+                            const Icon(CupertinoIcons.checkmark_seal_fill, size: 20, color: AppColors.green),
                             const SizedBox(width: 6),
                             Text('موثّق', style: ts(14, weight: FontWeight.w600, color: AppColors.green)),
                           ],
@@ -657,8 +657,8 @@ class _CountrySheetState extends State<_CountrySheet> {
                 },
                 decoration: pillInput('ابحث عن دولة').copyWith(
                   fillColor: AppColors.bg,
-                  prefixIcon: Padding(
-                    padding: const EdgeInsetsDirectional.only(start: 18, end: 8),
+                  prefixIcon: const Padding(
+                    padding: EdgeInsetsDirectional.only(start: 18, end: 8),
                     child: Icon(CupertinoIcons.search, size: 20, color: AppColors.faint),
                   ),
                   prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
